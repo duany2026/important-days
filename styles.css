@@ -1,0 +1,964 @@
+/*
+ * ============================================================
+ * 重要日子插件样式
+ * ============================================================
+ * 版本：1.3.1
+ * 
+ * 设计原则：
+ * - 简洁美观的卡片设计
+ * - 自动适配亮色/暗色模式
+ * - 响应式布局，适配手机和电脑
+ * ============================================================
+ */
+
+/* ==================== 容器 ==================== */
+
+.important-days-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding: 20px;
+  max-width: 800px;
+  margin: 0 auto;
+  background: transparent;
+  box-sizing: border-box;
+}
+
+/* ==================== 头部 ==================== */
+
+.id-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #e0e0e0;
+  flex-shrink: 0;
+}
+
+.theme-dark .id-header {
+  border-bottom-color: #404040;
+}
+
+.id-header h2 {
+  margin: 0;
+  font-size: 24px;
+  font-weight: 600;
+  color: #333333;
+}
+
+.theme-dark .id-header h2 {
+  color: #ffffff;
+}
+
+.id-header-btns {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.id-refresh-btn,
+.id-add-btn {
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  font-size: 24px;
+  font-weight: 200;
+  color: #888888;
+  background: transparent;
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+}
+
+.id-add-btn {
+  position: relative;
+}
+
+.id-add-btn::before,
+.id-add-btn::after {
+  content: '';
+  position: absolute;
+  background: #888888;
+  border-radius: 1px;
+}
+
+.id-add-btn::before {
+  width: 16px;
+  height: 2px;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.id-add-btn::after {
+  width: 2px;
+  height: 16px;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.id-add-btn:hover::before,
+.id-add-btn:hover::after {
+  background: #667eea;
+}
+
+.theme-dark .id-add-btn::before,
+.theme-dark .id-add-btn::after {
+  background: #aaaaaa;
+}
+
+.theme-dark .id-add-btn:hover::before,
+.theme-dark .id-add-btn:hover::after {
+  background: #8b9eff;
+}
+
+.id-refresh-btn:hover,
+.id-add-btn:hover {
+  color: #667eea;
+  background: #f0f0f0;
+}
+
+.theme-dark .id-refresh-btn,
+.theme-dark .id-add-btn {
+  color: #aaaaaa;
+}
+
+.theme-dark .id-refresh-btn:hover,
+.theme-dark .id-add-btn:hover {
+  color: #8b9eff;
+  background: #383838;
+}
+
+/* ==================== 卡片容器 ==================== */
+
+.id-cards-container {
+  display: grid;
+  gap: 16px;
+  overflow-y: auto;
+  flex: 1;
+  padding-right: 4px;
+}
+
+/* ==================== 卡片 ==================== */
+
+.id-card {
+  background: #ffffff;
+  border: 1px solid #e0e0e0;
+  border-radius: 12px;
+  padding: 16px;
+  transition: all 0.2s ease;
+  display: flex;
+  gap: 16px;
+  align-items: center;
+}
+
+.id-card:hover {
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+}
+
+/* 暗色模式卡片 */
+.theme-dark .id-card {
+  background: #2a2a2a;
+  border-color: #404040;
+}
+
+.theme-dark .id-card:hover {
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+}
+
+/* 纪念日卡片 - 紫色边框 */
+.id-card-anniversary {
+  border-left: 4px solid #667eea;
+}
+
+.theme-dark .id-card-anniversary {
+  border-left-color: #8b9eff;
+}
+
+/* 生日卡片 - 橙色边框 */
+.id-card-birthday {
+  border-left: 4px solid #f5a623;
+}
+
+.theme-dark .id-card-birthday {
+  border-left-color: #ffb84d;
+}
+
+/* 卡片左侧内容区 */
+.id-card-left {
+  flex: 1;
+  min-width: 0;
+}
+
+/* 卡片右侧倒计时区 */
+.id-card-right {
+  text-align: center;
+  min-width: 70px;
+  flex-shrink: 0;
+}
+
+/* ==================== 卡片头部 ==================== */
+
+.id-card-header {
+  margin-bottom: 8px;
+}
+
+.id-card-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: #333333;
+}
+
+.theme-dark .id-card-title {
+  color: #ffffff;
+}
+
+/* ==================== 日期行 ==================== */
+
+.id-card-date {
+  margin-bottom: 6px;
+}
+
+.id-card-date-main {
+  font-size: 15px;
+  color: #666666;
+  margin-bottom: 4px;
+  line-height: 1.5;
+}
+
+.theme-dark .id-card-date-main {
+  color: #cccccc;
+}
+
+.id-card-date-sub {
+  font-size: 13px;
+  color: #999999;
+  line-height: 1.5;
+}
+
+.theme-dark .id-card-date-sub {
+  color: #777777;
+}
+
+/* 已过天数行 */
+.id-card-days {
+  font-size: 13px;
+  color: #999999;
+  margin-top: 4px;
+  line-height: 1.5;
+}
+
+.theme-dark .id-card-days {
+  color: #777777;
+}
+
+/* ==================== 倒计时（右侧） ==================== */
+
+.id-card-countdown {
+  margin-bottom: 0;
+}
+
+.id-card-countdown-main {
+  font-size: 48px;
+  font-weight: 700;
+  color: #667eea;
+  line-height: 1;
+}
+
+.theme-dark .id-card-countdown-main {
+  color: #8b9eff;
+}
+
+/* 临近时的明亮颜色 */
+.id-card-countdown-soon {
+  color: #f5a623;
+}
+
+.theme-dark .id-card-countdown-soon {
+  color: #ffb84d;
+}
+
+/* 倒计时装饰线 */
+.id-card-countdown-decoration {
+  width: 32px;
+  height: 3px;
+  background: #f5a623;
+  border-radius: 2px;
+  margin: 8px auto 0;
+}
+
+.theme-dark .id-card-countdown-decoration {
+  background: #ffb84d;
+}
+
+.id-card-countdown-label {
+  font-size: 11px;
+  color: #999999;
+  margin-top: 6px;
+}
+
+.theme-dark .id-card-countdown-label {
+  color: #777777;
+}
+
+/* ==================== 信息行 ==================== */
+
+.id-card-info {
+  margin-top: 6px;
+}
+
+.id-card-info-text {
+  font-size: 13px;
+  color: #999999;
+  line-height: 1.5;
+}
+
+.theme-dark .id-card-info-text {
+  color: #777777;
+}
+
+/* 下一次日期行 */
+.id-card-next {
+  font-size: 13px;
+  color: #999999;
+  margin-top: 4px;
+  line-height: 1.5;
+}
+
+.theme-dark .id-card-next {
+  color: #777777;
+}
+
+.id-card-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #333333;
+}
+
+.theme-dark .id-card-title {
+  color: #ffffff;
+}
+
+.id-card-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.id-card-actions button {
+  padding: 0;
+  font-size: 12px;
+  color: #888888;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  transition: color 0.2s ease;
+}
+
+.id-card-actions button:hover {
+  color: #667eea;
+}
+
+.theme-dark .id-card-actions button {
+  color: #888888;
+}
+
+.theme-dark .id-card-actions button:hover {
+  color: #8b9eff;
+}
+
+/* ==================== 日期行 ==================== */
+
+.id-card-date {
+  margin-bottom: 4px;
+}
+
+.id-card-date-main {
+  font-size: 13px;
+  color: #555555;
+  margin-bottom: 2px;
+}
+
+.theme-dark .id-card-date-main {
+  color: #e0e0e0;
+}
+
+.id-card-date-sub {
+  font-size: 12px;
+  color: #777777;
+}
+
+.theme-dark .id-card-date-sub {
+  color: #999999;
+}
+
+/* ==================== 倒计时（右侧） ==================== */
+
+.id-card-countdown {
+  margin-bottom: 0;
+}
+
+.id-card-countdown-main {
+  font-size: 28px;
+  font-weight: 700;
+  color: #667eea;
+  line-height: 1;
+}
+
+.theme-dark .id-card-countdown-main {
+  color: #8b9eff;
+}
+
+.id-card-countdown-label {
+  font-size: 11px;
+  color: #888888;
+  margin-top: 2px;
+}
+
+.theme-dark .id-card-countdown-label {
+  color: #888888;
+}
+
+/* ==================== 信息行 ==================== */
+
+.id-card-info {
+  margin-top: 4px;
+}
+
+.id-card-info-text {
+  font-size: 14px;
+  color: #666666;
+}
+
+.theme-dark .id-card-info-text {
+  color: #999999;
+}
+
+/* ==================== 空状态 ==================== */
+
+.id-empty {
+  text-align: center;
+  padding: 60px 20px;
+  color: #888888;
+}
+
+.theme-dark .id-empty {
+  color: #aaaaaa;
+}
+
+.id-empty p {
+  margin: 8px 0;
+  font-size: 15px;
+}
+
+/* ==================== 弹窗 ==================== */
+
+.id-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 99999;
+  padding: 20px;
+  box-sizing: border-box;
+}
+
+.id-modal {
+  background: #ffffff;
+  border-radius: 16px;
+  padding: 28px;
+  width: 100%;
+  max-width: 420px;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+  z-index: 100000;
+  position: relative;
+  box-sizing: border-box;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.theme-dark .id-modal {
+  background: #252525;
+}
+
+.id-modal h3 {
+  margin: 0 0 24px 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: #333333;
+  text-align: center;
+}
+
+.theme-dark .id-modal h3 {
+  color: #ffffff;
+}
+
+.id-modal-group {
+  margin-bottom: 20px;
+}
+
+.id-modal-group label {
+  display: block;
+  margin-bottom: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #555555;
+}
+
+.theme-dark .id-modal-group label {
+  color: #cccccc;
+}
+
+.id-modal-group input[type="text"],
+.id-modal-group select {
+  width: 100%;
+  padding: 12px 14px;
+  font-size: 15px;
+  color: #333333;
+  background-color: #f5f5f5;
+  border: 1px solid #e0e0e0;
+  border-radius: 10px;
+  outline: none;
+  transition: all 0.2s ease;
+  box-sizing: border-box;
+  height: 44px;
+  line-height: 20px;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.id-modal-group select {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23666' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  padding-right: 36px;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+}
+
+.id-modal-group input:focus,
+.id-modal-group select:focus {
+  border-color: #667eea;
+  background-color: #fff;
+}
+
+/* 深色模式 */
+.theme-dark .id-modal-group input,
+.theme-dark .id-modal-group select {
+  background-color: #3a3a3a;
+  color: #e0e0e0;
+  border-color: #505050;
+}
+
+.theme-dark .id-modal-group select {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23aaa' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+}
+
+.theme-dark .id-modal-group input:focus,
+.theme-dark .id-modal-group select:focus {
+  background-color: #454545;
+  border-color: #667eea;
+}
+
+/* 日期选择器容器 */
+.id-date-picker {
+  display: flex;
+  gap: 10px;
+}
+
+.id-date-picker select {
+  flex: 1;
+  min-width: 0;
+  height: 44px;
+  line-height: 20px;
+}
+
+/* 下拉框选项样式 - 确保文字可见 */
+.id-date-picker select option,
+.id-modal-group select option {
+  color: #333333;
+  background: #ffffff;
+  padding: 8px;
+}
+
+.theme-dark .id-date-picker select option,
+.theme-dark .id-modal-group select option {
+  color: #e0e0e0;
+  background: #3a3a3a;
+}
+
+/* 提示文字 */
+.id-modal-hint {
+  margin-top: 6px;
+  font-size: 12px;
+  color: #888888;
+  line-height: 1.4;
+}
+
+.theme-dark .id-modal-hint {
+  color: #888888;
+}
+
+/* 农历选项 */
+.id-modal-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  background: #f8f8f8;
+  border-radius: 10px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.theme-dark .id-modal-checkbox {
+  background: #333333;
+}
+
+.id-modal-checkbox input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  margin: 0;
+  padding: 0;
+  accent-color: #667eea;
+  cursor: pointer;
+  flex-shrink: 0;
+  vertical-align: middle;
+  position: relative;
+  top: 0;
+}
+
+.id-modal-checkbox span {
+  font-size: 14px;
+  color: #444444;
+  line-height: 18px;
+  display: inline-flex;
+  align-items: center;
+  margin-left: 8px;
+}
+
+.theme-dark .id-modal-checkbox span {
+  color: #e0e0e0;
+}
+
+/* 按钮 */
+.id-modal-btns {
+  display: flex;
+  gap: 12px;
+  margin-top: 28px;
+}
+
+.id-modal-btns button {
+  flex: 1;
+  padding: 12px 20px;
+  font-size: 15px;
+  font-weight: 500;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.id-modal-btns button:first-child {
+  color: #666666;
+  background: #f0f0f0;
+}
+
+.id-modal-btns button:first-child:hover {
+  background: #e5e5e5;
+}
+
+.theme-dark .id-modal-btns button:first-child {
+  color: #aaaaaa;
+  background: #3a3a3a;
+}
+
+.theme-dark .id-modal-btns button:first-child:hover {
+  background: #444444;
+}
+
+.id-modal-save {
+  color: #fff !important;
+  background: #667eea !important;
+}
+
+.id-modal-save:hover {
+  background: #5a6fd6 !important;
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+}
+
+.id-modal-btns button {
+  padding: 10px 20px;
+  font-size: 14px;
+  font-weight: 500;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.id-modal-btns button:first-child {
+  color: var(--text-muted);
+  background: var(--background-modifier-border);
+}
+
+.id-modal-btns button:first-child:hover {
+  background: var(--background-modifier-hover);
+}
+
+.id-modal-save {
+  color: #fff;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.id-modal-save:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+}
+
+/* 删除按钮 */
+.id-modal-delete {
+  width: 100%;
+  margin-top: 16px;
+  padding: 10px 20px;
+  font-size: 14px;
+  font-weight: 500;
+  color: #e53935;
+  background: transparent;
+  border: 1px solid #ffcdd2;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.id-modal-delete:hover {
+  background: #ffebee;
+  border-color: #e53935;
+}
+
+.theme-dark .id-modal-delete {
+  color: #ef5350;
+  border-color: #5c3d3d;
+}
+
+.theme-dark .id-modal-delete:hover {
+  background: #3d2525;
+  border-color: #ef5350;
+}
+
+/* ==================== 响应式设计 ==================== */
+
+/* 手机端 */
+@media (max-width: 768px) {
+  .important-days-container {
+    padding: 10px;
+  }
+  
+  .id-header {
+    margin-bottom: 8px;
+    padding-bottom: 8px;
+  }
+  
+  .id-header h2 {
+    font-size: 18px;
+  }
+  
+  .id-header-btns {
+    gap: 8px;
+  }
+  
+  .id-refresh-btn,
+  .id-add-btn {
+    width: 28px;
+    height: 28px;
+    font-size: 16px;
+  }
+  
+  .id-cards-container {
+    gap: 6px;
+  }
+  
+  .id-card {
+    padding: 8px 10px;
+    border-radius: 6px;
+    gap: 8px;
+  }
+  
+  .id-card-left {
+    min-width: 0;
+  }
+  
+  .id-card-right {
+    min-width: 44px;
+  }
+  
+  .id-card-header {
+    margin-bottom: 2px;
+  }
+  
+  .id-card-title {
+    font-size: 17px;
+  }
+  
+  .id-card-date {
+    margin-bottom: 4px;
+  }
+  
+  .id-card-date-main {
+    font-size: 14px;
+    margin-bottom: 2px;
+  }
+  
+  .id-card-date-sub {
+    font-size: 12px;
+  }
+  
+  .id-card-days {
+    font-size: 12px;
+    margin-top: 2px;
+  }
+  
+  .id-card-countdown-main {
+    font-size: 36px;
+  }
+  
+  .id-card-countdown-label {
+    font-size: 10px;
+    margin-top: 4px;
+  }
+  
+  .id-card-info {
+    margin-top: 4px;
+  }
+  
+  .id-card-info-text {
+    font-size: 12px;
+  }
+  
+  .id-card-next {
+    font-size: 12px;
+    margin-top: 2px;
+  }
+  
+  .id-modal {
+    padding: 14px;
+    margin: 6px;
+    max-width: calc(100% - 12px);
+    border-radius: 10px;
+  }
+  
+  .id-modal h3 {
+    font-size: 15px;
+    margin-bottom: 10px;
+  }
+  
+  .id-modal-group {
+    margin-bottom: 8px;
+  }
+  
+  .id-modal-group label {
+    font-size: 12px;
+    margin-bottom: 4px;
+  }
+  
+  .id-modal-group input,
+  .id-modal-group select {
+    padding: 6px 8px;
+    font-size: 13px;
+    height: 36px;
+    border-radius: 6px;
+  }
+  
+  .id-date-picker {
+    gap: 4px;
+  }
+  
+  .id-date-picker select {
+    height: 36px;
+  }
+  
+  .id-modal-hint {
+    font-size: 11px;
+    margin-top: 4px;
+  }
+  
+  .id-modal-checkbox {
+    padding: 8px 10px;
+  }
+  
+  .id-modal-checkbox span {
+    font-size: 13px;
+  }
+  
+  .id-modal-btns {
+    margin-top: 16px;
+    gap: 8px;
+  }
+  
+  .id-modal-btns button {
+    padding: 8px 12px;
+    font-size: 13px;
+    border-radius: 8px;
+  }
+  
+  .id-modal-delete {
+    margin-top: 12px;
+    padding: 8px 12px;
+    font-size: 13px;
+  }
+  
+  .id-empty {
+    padding: 40px 16px;
+  }
+  
+  .id-empty p {
+    font-size: 13px;
+  }
+}
+
+/* 小屏幕手机 */
+@media (max-width: 480px) {
+  .id-card-header {
+    flex-direction: row;
+    align-items: center;
+  }
+  
+  .id-card-actions {
+    width: auto;
+  }
+}
+
+/* ==================== 动画 ==================== */
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.id-card {
+  animation: fadeIn 0.3s ease;
+}
+
+.id-modal {
+  animation: fadeIn 0.2s ease;
+}
