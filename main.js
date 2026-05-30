@@ -2034,6 +2034,31 @@ var ImportantDaysPlugin = class extends import_obsidian2.Plugin {
     
     // 添加设置面板
     this.addSettingTab(new ImportantDaysSettingTab(this.app, this));
+    
+    // 监听数据文件变更
+    this.registerEvent(
+      this.app.vault.on("modify", (file) => {
+        if (file instanceof import_obsidian2.TFile && file.path === this.settings.dataFile) {
+          this.refreshView();
+        }
+      })
+    );
+    
+    this.registerEvent(
+      this.app.vault.on("delete", (file) => {
+        if (file instanceof import_obsidian2.TFile && file.path === this.settings.dataFile) {
+          this.refreshView();
+        }
+      })
+    );
+    
+    this.registerEvent(
+      this.app.vault.on("rename", (file, oldPath) => {
+        if (oldPath === this.settings.dataFile || (file instanceof import_obsidian2.TFile && file.path === this.settings.dataFile)) {
+          this.refreshView();
+        }
+      })
+    );
   }
   
   async loadSettings() {
@@ -2057,6 +2082,15 @@ var ImportantDaysPlugin = class extends import_obsidian2.Plugin {
     if (leaf) {
       await leaf.setViewState({ type: VIEW_TYPE_IMPORTANT_DAYS });
       workspace.revealLeaf(leaf);
+    }
+  }
+  
+  refreshView() {
+    const leaves = this.app.workspace.getLeavesOfType(VIEW_TYPE_IMPORTANT_DAYS);
+    for (const leaf of leaves) {
+      if (leaf.view instanceof ImportantDaysView) {
+        leaf.view.loadDays().then(() => leaf.view.render());
+      }
     }
   }
   
