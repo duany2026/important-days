@@ -487,7 +487,7 @@ var LUNAR_INFO = [
   21200, 43448, 43344, 46240, 46758, 44368, 21920, 43940, 42416, 21168,
   45683, 26928, 29495, 27296, 44368, 84821, 19296, 42352, 21732, 53600,
   59752, 54560, 55968, 92838, 22224, 19168, 43476, 41680, 53584, 62034,
-  54560, 55968, 92838, 22224, 19168, 43476, 41680, 53584, 62034, 54560
+54560
 ];
 
 /**
@@ -554,23 +554,25 @@ function solarToLunar(date) {
   let isLeap = false;
   let lunarMonth = 1;
   
-  while (true) {
-    let daysInMonth = getLunarMonthDays(lunarYear, lunarMonth);
-    if (leapMonth === lunarMonth && !isLeap) {
-      if (offset >= daysInMonth) {
-        offset -= daysInMonth;
-        lunarMonth++;
-      } else {
-        isLeap = true;
-        break;
-      }
+  for (let i = 0; i < 13; i++) {
+    let daysInMonth;
+    if (isLeap) {
+      daysInMonth = getLeapDays(lunarYear);
     } else {
-      if (offset >= daysInMonth) {
-        offset -= daysInMonth;
-        lunarMonth++;
-      } else {
-        break;
-      }
+      daysInMonth = getLunarMonthDays(lunarYear, lunarMonth);
+    }
+    
+    if (offset < daysInMonth) {
+      break;
+    }
+    
+    offset -= daysInMonth;
+    
+    if (!isLeap && leapMonth === lunarMonth) {
+      isLeap = true;
+    } else {
+      isLeap = false;
+      lunarMonth++;
     }
   }
   
@@ -1154,7 +1156,7 @@ var ImportantDaysView = class extends import_obsidian.ItemView {
       // 计算公历日期
       let solarDate;
       if (day.isLunar) {
-        solarDate = lunarToSolar(day.year, day.month, day.day);
+        solarDate = lunarToSolar(day.year, day.month, day.day, day.isLeapMonth);
       } else {
         solarDate = new Date(day.year, day.month - 1, day.day);
       }
