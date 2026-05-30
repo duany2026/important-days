@@ -667,8 +667,11 @@ function getConstellation(month, day) {
     const [startMonth, startDay] = c.start;
     const [endMonth, endDay] = c.end;
     
-    if (month === startMonth && day >= startDay) return c.name;
-    if (month === endMonth && day <= endDay) return c.name;
+    if (startMonth === endMonth) {
+      if (month === startMonth && day >= startDay && day <= endDay) return c.name;
+    } else {
+      if ((month === startMonth && day >= startDay) || (month === endMonth && day <= endDay)) return c.name;
+    }
   }
   return "摩羯座";
 }
