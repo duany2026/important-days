@@ -1,5 +1,16 @@
 # 重要日子 (Important Days)
 
+## 📥 下载安装（小白版）
+
+1. 打开本仓库的 [Releases 页面](https://github.com/duany2026/important-days/releases)，下载最新版本的 `important-days-1.4.0.zip`
+2. 解压，得到文件夹 `important-days`
+3. 打开你的 Obsidian 笔记库文件夹，进入隐藏目录 `.obsidian/plugins/`（如果没见过这个目录：在 Obsidian 里点左下角仓库图标 →「在系统资源管理器中显示仓库」，进去就能看到 `.obsidian`）
+4. 把解压出的 `important-days` 文件夹整个放进去，变成 `.obsidian/plugins/important-days/`（里面应有 `main.js`、`manifest.json`、`styles.css`）
+5. 重启 Obsidian → 设置 → 第三方插件 → 关闭「安全模式」→ 在已安装插件列表中启用「重要日子」
+
+> 进阶：也可以安装 [BRAT](https://github.com/TfTHacker/obsidian42-brat) 插件，添加仓库地址 `https://github.com/duany2026/important-days`，以后可自动更新。
+
+
 记录生活中的重要日子：纪念日、生日、周期事件。支持倒计时、农历公历互转、属相星座显示，适配桌面端和移动端。
 
 ## 功能特性
