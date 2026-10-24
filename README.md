@@ -2,7 +2,7 @@
 
 ## 📥 下载安装（小白版）
 
-1. 打开本仓库的 [Releases 页面](https://github.com/duany2026/important-days/releases)，下载最新版本的 `important-days-1.4.0.zip`
+1. 打开本仓库的 [Releases 页面](https://github.com/duany2026/important-days/releases)，下载最新版本的 `important-days-1.4.1.zip`
 2. 解压，得到文件夹 `important-days`
 3. 打开你的 Obsidian 笔记库文件夹，进入隐藏目录 `.obsidian/plugins/`（如果没见过这个目录：在 Obsidian 里点左下角仓库图标 →「在系统资源管理器中显示仓库」，进去就能看到 `.obsidian`）
 4. 把解压出的 `important-days` 文件夹整个放进去，变成 `.obsidian/plugins/important-days/`（里面应有 `main.js`、`manifest.json`、`styles.css`）
@@ -74,6 +74,12 @@
 - 桌面端与移动端（非桌面专用）
 
 ## 版本记录
+
+### 1.4.1（2026-10-24）
+
+- 修复：农历生日的年龄与「今日N岁」判定不同源——岁数此前按出生公历日的周年翻转（getAge），而当天判定按农历生日（getNextBirthday），两者每年错开最多约一个月，窗口期内「今日N岁」/「即将N岁」会差一岁；现岁数与当天判定统一以 getNextBirthday 为锚（下一个生日所属农历年/公历年 − 出生年），公历生日（含 2/29）行为不变
+- 修复：保存合并的小节定位与 H1 检查不识别代码块——格式示例贴进数据文件时，新条目可能被插进代码块内（保存后重新解析即消失）、或因块内「# 重要日子」而漏补真实 H1；自动扫描的全文回退匹配同步改为跳过代码块，与 metadataCache 的 headings 口径一致
+- 改进：删除确认从原生 confirm 改为 Obsidian Modal 确认弹窗（confirm 在部分移动端 WebView 不弹窗/不阻塞），复用编辑弹窗的 Modal 基类与样式；编辑弹窗关闭时确认弹窗连带关闭
 
 ### 1.4.0（2026-09-05）
 

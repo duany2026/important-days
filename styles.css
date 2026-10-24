@@ -2,7 +2,7 @@
  * ============================================================
  * 重要日子插件样式
  * ============================================================
- * 版本：1.4.0
+ * 版本：1.4.1
  * 
  * 设计原则：
  * - 简洁美观的卡片设计
@@ -585,6 +585,25 @@
   background: #5a6fd6;
   transform: translateY(-1px);
   box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+}
+
+/* 删除确认弹窗的确认按钮（复用 .id-modal-btns 布局，破坏性配色） */
+.id-modal-btns .id-modal-danger {
+  color: #fff;
+  background: #e53935;
+}
+
+.id-modal-btns .id-modal-danger:hover {
+  background: #d32f2f;
+  box-shadow: 0 4px 12px rgba(229, 57, 53, 0.4);
+}
+
+.theme-dark .id-modal-btns .id-modal-danger {
+  background: #c62828;
+}
+
+.theme-dark .id-modal-btns .id-modal-danger:hover {
+  background: #d32f2f;
 }
 
 /* 删除按钮 */

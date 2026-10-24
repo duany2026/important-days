@@ -4,7 +4,7 @@
  * ============================================================
  *
  * 插件功能：记录生活中的重要日子，支持纪念日、生日倒计时
- * 版本：1.4.0
+ * 版本：1.4.1
  * 作者：duany
  * 许可证：MIT
  *
@@ -978,6 +978,18 @@ function applyDaysUpdate(originalContent, currentDays, baseDays) {
   const usesCRLF = originalContent.includes("\r\n");
   const dayLineText = (d) => formatDayLine(d) + (usesCRLF ? "\r" : "");
   const SECTION_LABELS = { anniversary: "纪念日", birthday: "生日", cycle: "周期事件" };
+  // 代码块行遮罩（与 parseDays 的 ``` 开关同口径）：块内的 ## / # 行不算小节标题，
+  // 新条目不能锚进代码块——否则保存后重新解析时该行被跳过，条目凭空消失
+  const fencedLine = new Array(lines.length).fill(false);
+  let fenceOpen = false;
+  for (let i = 0; i < lines.length; i++) {
+    const t = lines[i].trim();
+    if (t.startsWith("```")) {
+      fenceOpen = !fenceOpen;
+      continue;
+    }
+    fencedLine[i] = fenceOpen;
+  }
 
   // 每行的动作：null=原样保留；{day}=替换为该条目；"delete"=删除该行
   const action = new Array(lines.length).fill(null);
@@ -1063,10 +1075,12 @@ function applyDaysUpdate(originalContent, currentDays, baseDays) {
     let headerIdx = -1;
     let lastEntryIdx = -1;
     for (let i = 0; i < lines.length; i++) {
+      if (fencedLine[i]) continue;
       if (sectionOf(lines[i]) === type) {
         headerIdx = i;
         lastEntryIdx = i;
         for (let j = i + 1; j < lines.length; j++) {
+          if (fencedLine[j]) continue;
           const t = lines[j].trim();
           if (t.startsWith("## ")) break;
           if (t.startsWith("- ")) lastEntryIdx = j;
@@ -1109,9 +1123,21 @@ function applyDaysUpdate(originalContent, currentDays, baseDays) {
 
   // 文件缺「# 重要日子」H1（如对空文件新建小节曾遗漏）：补在最前，
   // 保证 IDY-4 的 H1 精确扫描此后仍能找到该数据文件。
-  // 容忍首字符 BOM（个别编辑器写入），否则带 BOM 的文件会被误判缺 H1 而追加第二个标题；
-  // 补写时剥离原 BOM，避免其滞留文件中间挂在原首行之前
-  if (!/^(?:\uFEFF)?#\s*重要日子\s*$/m.test(result)) {
+  // H1 检查同样跳过代码块（与 parseDays/小节定位同口径）：贴进文件的格式示例
+  // 里的「# 重要日子」不算真实标题；逐行 trim 后匹配（trim 会剥掉 BOM 与 CRLF 的 \r）
+  let hasH1 = false;
+  let fenceOpenH1 = false;
+  for (const ln of result.split("\n")) {
+    if (ln.trim().startsWith("```")) {
+      fenceOpenH1 = !fenceOpenH1;
+      continue;
+    }
+    if (!fenceOpenH1 && /^#\s*重要日子$/.test(ln.trim())) {
+      hasH1 = true;
+      break;
+    }
+  }
+  if (!hasH1) {
     result = `# 重要日子${eol}${eol}${result.replace(/^\uFEFF/, "")}`;
   }
   return result;
@@ -1510,7 +1536,31 @@ var ImportantDaysView = class extends import_obsidian.ItemView {
     
     return next;
   }
-  
+
+  /**
+   * 生日年龄（与倒计时/当天判定同源，以 getNextBirthday 为锚）：
+   * 下一个生日到达的岁数 = 下一个生日所属农历年（农历生日）/公历年（公历生日）− 出生年；
+   * 当天即为生日时该岁数已经到达，否则已满岁数为它减一。
+   * 旧实现按出生公历日的周年翻转（getAge）：农历生日与该公历周年每年错开
+   * 最多约一个月，窗口期内「今日N岁」/「即将N岁」会差一岁。
+   * @param day - 日子对象（含 isLunar/year）
+   * @param nextBirthday - getNextBirthday 的返回值
+   * @returns { isToday, completedAge }；nextBirthday 无效时返回 null（调用方兜底）
+   */
+  getBirthdayAgeInfo(day, nextBirthday) {
+    if (!nextBirthday || isNaN(nextBirthday.getTime())) return null;
+    let anchorYear = nextBirthday.getFullYear();
+    if (day.isLunar) {
+      // 农历生日按所属农历年计（春节前的公历日期属上一个农历年）
+      const nextLunar = solarToLunar(nextBirthday);
+      if (nextLunar) anchorYear = nextLunar.year;
+    }
+    const nextAge = anchorYear - day.year;
+    const isToday = getDaysUntil(nextBirthday) === 0;
+    const completedAge = Math.max(0, isToday ? nextAge : nextAge - 1);
+    return { isToday, completedAge };
+  }
+
   renderCard(container, day) {
     try {
       const card = container.createDiv("id-card");
@@ -1599,10 +1649,17 @@ var ImportantDaysView = class extends import_obsidian.ItemView {
       const lunarDate = solarToLunar(solarDate);
       
       // 年龄文案：生日当天显示「今日N岁」，其余时间显示「即将N+1岁」
-      // 当天判定与右侧倒计时同源（getNextBirthday），闰年 2/29 → 2/28 的约定也一致
+      // 岁数与当天判定统一以 getNextBirthday 为锚（见 getBirthdayAgeInfo），
+      // 闰年 2/29 → 2/28 的约定与农历口径一并覆盖
       const nextBirthdayForAge = this.getNextBirthday(day);
-      const isBirthdayToday = !!nextBirthdayForAge && !isNaN(nextBirthdayForAge.getTime()) && getDaysUntil(nextBirthdayForAge) === 0;
-      const ageText = isBirthdayToday ? `今日${getAge(solarDate)}岁` : `即将${getAge(solarDate) + 1}岁`;
+      const ageInfo = this.getBirthdayAgeInfo(day, nextBirthdayForAge);
+      let ageText;
+      if (ageInfo) {
+        ageText = ageInfo.isToday ? `今日${ageInfo.completedAge}岁` : `即将${ageInfo.completedAge + 1}岁`;
+      } else {
+        // 下一次生日无效（超农历表范围等）：退回公历周年口径
+        ageText = `即将${getAge(solarDate) + 1}岁`;
+      }
       
       // 已出生天数
       const daysPassed = getDaysPassed(solarDate);
@@ -1815,6 +1872,14 @@ var ImportantDaysView = class extends import_obsidian.ItemView {
     }
   }
   
+  // 收掉 Modal 框架自带的 X 关闭按钮与空头部占位（新版弹窗结构）；
+  // 关闭按钮在 onOpen 后才挂载，调用方需 rAF/100ms 延迟重试
+  sweepModalChrome(m) {
+    m.containerEl.querySelectorAll(".modal-header-button, .modal-close-button").forEach((el) => el.remove());
+    const header = m.modalEl.querySelector(":scope > .modal-header");
+    if (header) header.remove();
+  }
+
   showAddModal() {
     this.showDayModal(null);
   }
@@ -1838,13 +1903,11 @@ var ImportantDaysView = class extends import_obsidian.ItemView {
     modal.contentEl.addClass("id-modal-content");
     const modalNode = modal.contentEl;
     const removeOverlay = () => modal.close();
+    // 删除确认弹窗（叠加在本弹窗之上，见删除按钮）：本弹窗关闭时连带关闭，避免孤儿确认框
+    let confirmModalRef = null;
     // 收掉框架自带的 X 关闭按钮与空头部占位（新版弹窗结构）；
     // 关闭按钮在 onOpen 后才挂载，rAF/100ms 延迟重试
-    const sweepChrome = () => {
-      modal.containerEl.querySelectorAll(".modal-header-button, .modal-close-button").forEach((el) => el.remove());
-      const header = modal.modalEl.querySelector(":scope > .modal-header");
-      if (header) header.remove();
-    };
+    const sweepChrome = () => this.sweepModalChrome(modal);
     sweepChrome();
     requestAnimationFrame(sweepChrome);
     setTimeout(sweepChrome, 100);
@@ -2294,36 +2357,77 @@ var ImportantDaysView = class extends import_obsidian.ItemView {
       deleteBtn.textContent = "删除";
       modalNode.appendChild(deleteBtn);
       
-      deleteBtn.addEventListener("click", async () => {
-        const confirmed = confirm(`确定删除「${editDay.name}」吗？`);
-        if (!confirmed) return;
-
-        // 禁用按钮防止异步期间重复点击
-        deleteBtn.disabled = true;
-        saveBtn.disabled = true;
-        // 保存快照，失败时回滚避免内存与文件不一致
-        const snapshot = this.days.slice();
-        try {
-          const next = this.days.filter(d => !(d.id === editDay.id && d.type === editDay.type));
-          // 目标条目已找不到（弹窗打开期间外部改动导致 days 被重建）：
-          // 明确报错并关闭弹窗，不再落盘空操作、不提示「已删除」
-          if (next.length === this.days.length) {
+      deleteBtn.addEventListener("click", () => {
+        // 删除确认用 Obsidian Modal 而非原生 confirm：后者在部分移动端 WebView
+        // 不弹窗/不阻塞（编辑弹窗正是因此迁移 Modal 基类）；确认弹窗叠加在编辑弹窗之上
+        const doDelete = async () => {
+          // 禁用按钮防止异步期间重复点击
+          deleteBtn.disabled = true;
+          saveBtn.disabled = true;
+          // 保存快照，失败时回滚避免内存与文件不一致
+          const snapshot = this.days.slice();
+          try {
+            const next = this.days.filter(d => !(d.id === editDay.id && d.type === editDay.type));
+            // 目标条目已找不到（弹窗打开期间外部改动导致 days 被重建）：
+            // 明确报错并关闭弹窗，不再落盘空操作、不提示「已删除」
+            if (next.length === this.days.length) {
+              removeOverlay();
+              throw new Error("该记录已被外部改动，请刷新后重试");
+            }
+            this.days = next;
+            await this.saveDays();
+            this.render();
             removeOverlay();
-            throw new Error("该记录已被外部改动，请刷新后重试");
+            // 卡片从列表消失即反馈，不再弹成功提示；失败路径的 Notice 保留
+          } catch (e) {
+            this.days = snapshot;
+            deleteBtn.disabled = false;
+            saveBtn.disabled = false;
+            console.error("删除失败:", e);
+            // 透出具体原因（如「数据文件已被外部修改」），便于用户理解被拒绝的原因
+            new import_obsidian.Notice(e && e.message ? e.message : "删除失败");
           }
-          this.days = next;
-          await this.saveDays();
-          this.render();
-          removeOverlay();
-          // 卡片从列表消失即反馈，不再弹成功提示；失败路径的 Notice 保留
-        } catch (e) {
-          this.days = snapshot;
-          deleteBtn.disabled = false;
-          saveBtn.disabled = false;
-          console.error("删除失败:", e);
-          // 透出具体原因（如「数据文件已被外部修改」），便于用户理解被拒绝的原因
-          new import_obsidian.Notice(e && e.message ? e.message : "删除失败");
-        }
+        };
+
+        const confirmModal = new import_obsidian.Modal(this.app);
+        confirmModal.modalEl.addClass("id-modal");
+        confirmModal.modalEl.style.padding = "0";
+        confirmModal.modalEl.style.width = "360px";
+        confirmModal.modalEl.style.maxWidth = "88vw";
+        confirmModal.contentEl.addClass("id-modal-content");
+        const sweepConfirm = () => this.sweepModalChrome(confirmModal);
+        sweepConfirm();
+        requestAnimationFrame(sweepConfirm);
+        setTimeout(sweepConfirm, 100);
+        const confirmMsg = document.createElement("p");
+        confirmMsg.textContent = `确定删除「${editDay.name}」吗？`;
+        confirmMsg.style.margin = "0 0 20px";
+        confirmMsg.style.fontSize = "14px";
+        confirmMsg.style.lineHeight = "1.6";
+        confirmMsg.style.textAlign = "center";
+        confirmModal.contentEl.appendChild(confirmMsg);
+        const confirmBtns = document.createElement("div");
+        confirmBtns.className = "id-modal-btns";
+        const confirmNo = document.createElement("button");
+        confirmNo.textContent = "取消";
+        const confirmYes = document.createElement("button");
+        confirmYes.textContent = "删除";
+        confirmYes.className = "id-modal-danger";
+        confirmBtns.appendChild(confirmNo);
+        confirmBtns.appendChild(confirmYes);
+        confirmModal.contentEl.appendChild(confirmBtns);
+        confirmNo.addEventListener("click", () => confirmModal.close());
+        confirmYes.addEventListener("click", () => {
+          confirmModal.close();
+          doDelete();
+        });
+        confirmModalRef = confirmModal;
+        confirmModal.onClose = () => {
+          if (confirmModalRef === confirmModal) confirmModalRef = null;
+        };
+        confirmModal.open();
+        // 破坏性操作默认聚焦「取消」：误按回车不会直接删除
+        confirmNo.focus();
       });
     }
     
@@ -2485,6 +2589,8 @@ var ImportantDaysView = class extends import_obsidian.ItemView {
     this._activeModal = modal;
     modal.open();
     modal.onClose = () => {
+      // 编辑弹窗关闭时连带关闭未决的删除确认弹窗
+      if (confirmModalRef) confirmModalRef.close();
       if (this._activeModal === modal) this._activeModal = null;
     };
     // 无障碍：弹窗打开即聚焦保存按钮，键盘用户无需先 Tab 穿过被遮罩的视图内容
@@ -2659,9 +2765,23 @@ async function scanForDataFiles(app) {
         }
         continue;
       }
-      // 缓存未就绪（新建/未索引）：回退读全文精确匹配 H1 行（容掉个别编辑器写入的 BOM）
+      // 缓存未就绪（新建/未索引）：回退读全文精确匹配 H1 行（容掉个别编辑器写入的 BOM）。
+      // 与 metadataCache 的 headings 口径一致：代码块内的 H1 不算标题（逐行 trim 后匹配，
+      // trim 会剥掉 BOM 与 CRLF 的 \r）
       const content = (await app.vault.cachedRead(file)).replace(/^\uFEFF/, "");
-      if (H1_RE.test(content)) {
+      let h1Found = false;
+      let fenceOpen = false;
+      for (const ln of content.split("\n")) {
+        if (ln.trim().startsWith("```")) {
+          fenceOpen = !fenceOpen;
+          continue;
+        }
+        if (!fenceOpen && H1_RE.test(ln.trim())) {
+          h1Found = true;
+          break;
+        }
+      }
+      if (h1Found) {
         hits.push(file.path);
       }
     } catch (e) {
