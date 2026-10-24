@@ -1,0 +1,41 @@
+name: Release
+
+# 主分支上的版本号变化自动打包并发布；已有同版本 Release 时跳过
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: 打包并发布
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          VER=$(node -p "require('./manifest.json').version")
+          TAG="v${VER}"
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            echo "Release ${TAG} 已存在，跳过"
+            exit 0
+          fi
+          rm -rf dist
+          mkdir -p dist/important-days
+          cp main.js manifest.json styles.css versions.json README.md LICENSE dist/important-days/
+          (cd dist && zip -qr "../important-days-${VER}.zip" important-days)
+          {
+            printf '重要日子 %s\n\n' "$TAG"
+            awk -v ver="$VER" 'index($0, "### " ver) == 1 { f=1; next } f && /^### / { exit } f { print }' README.md
+            printf '\n下载 `important-days-%s.zip`，解压后把 `important-days` 文件夹放进笔记库 `.obsidian/plugins/`。\n' "$VER"
+          } > RELEASE_NOTES.md
+          gh release create "$TAG" "important-days-${VER}.zip" \
+            --title "重要日子 ${TAG}" \
+            --notes-file RELEASE_NOTES.md
