@@ -2,6 +2,12 @@
 
 ## 下载安装（小白版）
 
+**最省事的一条路：直接在 Obsidian 里装。** 设置 → 第三方插件 → 浏览，搜索「Important Days」→ 安装 → 启用。插件已在官方社区目录里，之后的更新也在这个页面点一下就能拿到。
+
+> 从社区目录安装时，客户端只逐个下载 Release 里的 `main.js`、`manifest.json`、`styles.css` 三份文件。这个插件完全不联网，也没有需要另行下载的数据文件——数据就是你自己库里的一个 Markdown 笔记。
+
+**想手动装**（比如所在网络打不开社区插件浏览器）：
+
 1. 打开本仓库的 [Releases 页面](https://github.com/duany2026/important-days/releases)，下载最新版本里的 `important-days-<版本号>.zip`
 2. 解压，得到文件夹 `important-days`
 3. 打开你的 Obsidian 笔记库文件夹，进入隐藏目录 `.obsidian/plugins/`（如果没见过这个目录：在 Obsidian 里点左下角仓库图标 →「在系统资源管理器中显示仓库」，进去就能看到 `.obsidian`）
@@ -26,6 +32,10 @@
 - **自动扫描** — 自动查找包含「# 重要日子」标题的 Markdown 文件作为数据文件
 
 ## 安装
+
+### 社区插件市场（推荐）
+
+设置 → 第三方插件 → 浏览，搜索「Important Days」，安装后启用。更新也在同一页点一下即可。
 
 ### 本地安装
 
