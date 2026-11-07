@@ -4,7 +4,7 @@
  * ============================================================
  *
  * 插件功能：记录生活中的重要日子，支持纪念日、生日倒计时
- * 版本：1.4.1
+ * 版本：1.4.2
  * 作者：duany
  * 许可证：MIT
  *
@@ -273,7 +273,6 @@ function getNextCycleDate(cycleType, cycleValue) {
   today.setHours(0, 0, 0, 0); // 重置时间为当天开始
   const currentYear = today.getFullYear();
   const currentMonth = today.getMonth();
-  const currentDay = today.getDate();
   const currentDayOfWeek = today.getDay(); // 0-6, 0=周日
   
   let nextDate;
@@ -416,11 +415,7 @@ var LUNAR_DAY_NAMES = [
   "廿六", "廿七", "廿八", "廿九", "三十"
 ];
 
-/** 天干 */
-var TIAN_GAN = ["甲", "乙", "丙", "丁", "戊", "己", "庚", "辛", "壬", "癸"];
 
-/** 地支 */
-var DI_ZHI = ["子", "丑", "寅", "卯", "辰", "巳", "午", "未", "申", "酉", "戌", "亥"];
 
 /** 生肖 */
 var ZODIAC_ANIMALS = ["鼠", "牛", "虎", "兔", "龙", "蛇", "马", "羊", "猴", "鸡", "狗", "猪"];
@@ -510,8 +505,6 @@ function getLunarMonthDays(year, month) {
  */
 function solarToLunar(date) {
   let year = date.getFullYear();
-  let month = date.getMonth() + 1;
-  let day = date.getDate();
   
   // 上界放宽到 2101：农历 2100 年的冬月/腊月落在公历 2101 年初，
   // 与 lunarToSolar（允许农历年 2100）口径对齐；超出返回 null
@@ -1188,10 +1181,8 @@ var ImportantDaysView = class extends import_obsidian.ItemView {
       this.contentEl.empty();
       const err = this.contentEl.createDiv("id-empty");
       err.createEl("p").textContent = "视图初始化失败";
-      const msg = err.createEl("p");
+      const msg = err.createEl("p", { cls: "id-error-msg" });
       msg.textContent = String(e && e.message ? e.message : e);
-      msg.style.color = "var(--text-error)";
-      msg.style.fontSize = "0.9em";
     }
   }
 
@@ -1216,7 +1207,7 @@ var ImportantDaysView = class extends import_obsidian.ItemView {
       await this.loadDays();
       this.plugin._daysCache = this.days.slice();
       this.render();
-    } catch (e) {
+    } catch {
       new import_obsidian.Notice("数据文件读取失败");
       // 加载失败时：若已用缓存显示，保留缓存数据不清空；否则渲染空状态
       if (!usedCache) {
@@ -1301,10 +1292,8 @@ var ImportantDaysView = class extends import_obsidian.ItemView {
       this.rootEl.empty();
       const err = this.rootEl.createDiv("id-empty");
       err.createEl("p").textContent = "视图渲染失败";
-      const msg = err.createEl("p");
+      const msg = err.createEl("p", { cls: "id-error-msg" });
       msg.textContent = String(e && e.message ? e.message : e);
-      msg.style.color = "var(--text-error)";
-      msg.style.fontSize = "0.9em";
     }
   }
 
@@ -1333,7 +1322,7 @@ var ImportantDaysView = class extends import_obsidian.ItemView {
       this.rootEl.createDiv("id-loading").textContent = "加载中...";
       try {
         await this.loadDays();
-      } catch (e) {
+      } catch {
         new import_obsidian.Notice("数据文件读取失败");
       }
       this.render();
@@ -1348,29 +1337,19 @@ var ImportantDaysView = class extends import_obsidian.ItemView {
     // 文件不存在提示
     if (!fileExists) {
       const empty = this.rootEl.createDiv("id-empty");
-      const p1 = empty.createEl("p");
+      const p1 = empty.createEl("p", { cls: "id-empty-strong" });
       p1.textContent = "数据文件不存在";
-      p1.style.fontWeight = "bold";
-      
-      const p2 = empty.createEl("p");
+
+      const p2 = empty.createEl("p", { cls: "id-empty-path" });
       p2.textContent = `当前路径：${this.plugin.settings.dataFile}`;
-      p2.style.color = "var(--text-muted)";
-      p2.style.fontSize = "0.9em";
-      
-      const divider = empty.createEl("div");
-      divider.style.margin = "16px 0";
-      divider.style.borderTop = "1px solid var(--background-modifier-border)";
-      
-      const p3 = empty.createEl("p");
+
+      empty.createEl("div", { cls: "id-empty-divider" });
+
+      // margin-bottom 8px 由 .id-empty p 的 margin:8px 0 承担，不再单独写
+      const p3 = empty.createEl("p", { cls: "id-empty-strong" });
       p3.textContent = "解决方法：";
-      p3.style.fontWeight = "bold";
-      p3.style.marginBottom = "8px";
-      
-      const ul = empty.createEl("ul");
-      ul.style.textAlign = "left";
-      ul.style.paddingLeft = "20px";
-      ul.style.color = "var(--text-muted)";
-      ul.style.lineHeight = "1.8";
+
+      const ul = empty.createEl("ul", { cls: "id-empty-list" });
       
       const li1 = ul.createEl("li");
       li1.textContent = "在插件设置中点击「重新扫描」自动查找";
@@ -1421,10 +1400,10 @@ var ImportantDaysView = class extends import_obsidian.ItemView {
     
     // 取消上一帧尚未执行的回调：视图已重建后旧回调会操作脱离文档的节点
     if (this._heightRaf) {
-      cancelAnimationFrame(this._heightRaf);
+      window.cancelAnimationFrame(this._heightRaf);
     }
     // 延迟执行，等待渲染完成
-    this._heightRaf = requestAnimationFrame(() => {
+    this._heightRaf = window.requestAnimationFrame(() => {
       this._heightRaf = null;
       let maxHeight = 0;
       cards.forEach(card => {
@@ -1571,14 +1550,14 @@ var ImportantDaysView = class extends import_obsidian.ItemView {
       let pressTimer = null;
       const cancelPress = () => {
         if (pressTimer) {
-          clearTimeout(pressTimer);
+          window.clearTimeout(pressTimer);
           this._pressTimers.delete(pressTimer);
           pressTimer = null;
         }
       };
       card.addEventListener("touchstart", () => {
         cancelPress();
-        pressTimer = setTimeout(() => {
+        pressTimer = window.setTimeout(() => {
           this._pressTimers.delete(pressTimer);
           pressTimer = null;
           this.showEditModal(day);
@@ -1628,8 +1607,6 @@ var ImportantDaysView = class extends import_obsidian.ItemView {
   
   renderBirthdayCard(card, day, dateRow, rightArea) {
     try {
-      const today = new Date();
-      
       // 计算公历日期
       let solarDate;
       if (day.isLunar) {
@@ -1896,10 +1873,7 @@ var ImportantDaysView = class extends import_obsidian.ItemView {
     // 使用 Obsidian Modal 基类（与 monthly-tasks 同款改造）：
     // 移动端系统返回键、ESC、点击遮罩关闭均由框架统一处理，内容构建在 contentEl 内
     const modal = new import_obsidian.Modal(this.app);
-    modal.modalEl.addClass("id-modal");
-    modal.modalEl.style.padding = "0";
-    modal.modalEl.style.width = "420px";
-    modal.modalEl.style.maxWidth = "92vw";
+    modal.modalEl.addClass("id-modal", "id-modal-day");
     modal.contentEl.addClass("id-modal-content");
     const modalNode = modal.contentEl;
     const removeOverlay = () => modal.close();
@@ -1909,20 +1883,20 @@ var ImportantDaysView = class extends import_obsidian.ItemView {
     // 关闭按钮在 onOpen 后才挂载，rAF/100ms 延迟重试
     const sweepChrome = () => this.sweepModalChrome(modal);
     sweepChrome();
-    requestAnimationFrame(sweepChrome);
-    setTimeout(sweepChrome, 100);
+    window.requestAnimationFrame(sweepChrome);
+    window.setTimeout(sweepChrome, 100);
 
     // 标题
-    const title = document.createElement("h3");
+    const title = activeDocument.createElement("h3");
     title.textContent = editDay ? "编辑日子" : "添加日子";
     modalNode.appendChild(title);
     
     // 名称
-    const nameGroup = document.createElement("div");
+    const nameGroup = activeDocument.createElement("div");
     nameGroup.className = "id-modal-group";
-    const nameLabel = document.createElement("label");
+    const nameLabel = activeDocument.createElement("label");
     nameLabel.textContent = "名称";
-    const nameInput = document.createElement("input");
+    const nameInput = activeDocument.createElement("input");
     nameInput.type = "text";
     nameInput.placeholder = "例如：结婚纪念日";
     if (editDay) nameInput.value = editDay.name;
@@ -1931,18 +1905,18 @@ var ImportantDaysView = class extends import_obsidian.ItemView {
     modalNode.appendChild(nameGroup);
     
     // 类型
-    const typeGroup = document.createElement("div");
+    const typeGroup = activeDocument.createElement("div");
     typeGroup.className = "id-modal-group";
-    const typeLabel = document.createElement("label");
+    const typeLabel = activeDocument.createElement("label");
     typeLabel.textContent = "类型";
-    const typeSelect = document.createElement("select");
-    const optAnniversary = document.createElement("option");
+    const typeSelect = activeDocument.createElement("select");
+    const optAnniversary = activeDocument.createElement("option");
     optAnniversary.value = "anniversary";
     optAnniversary.textContent = "纪念日";
-    const optBirthday = document.createElement("option");
+    const optBirthday = activeDocument.createElement("option");
     optBirthday.value = "birthday";
     optBirthday.textContent = "生日";
-    const optCycle = document.createElement("option");
+    const optCycle = activeDocument.createElement("option");
     optCycle.value = "cycle";
     optCycle.textContent = "周期事件";
     typeSelect.appendChild(optAnniversary);
@@ -1956,24 +1930,24 @@ var ImportantDaysView = class extends import_obsidian.ItemView {
     typeGroup.appendChild(typeLabel);
     typeGroup.appendChild(typeSelect);
     // 类型说明
-    const typeHint = document.createElement("div");
+    const typeHint = activeDocument.createElement("div");
     typeHint.className = "id-modal-hint";
     typeHint.textContent = "纪念日显示倒计时和周年数，生日显示年龄、属相和星座，周期事件支持每月/每季度/每年/每周";
     typeGroup.appendChild(typeHint);
     modalNode.appendChild(typeGroup);
     
     // ========== 周期事件输入区域 ==========
-    const cycleGroup = document.createElement("div");
+    const cycleGroup = activeDocument.createElement("div");
     cycleGroup.className = "id-modal-group";
-    const cycleLabel = document.createElement("label");
+    const cycleLabel = activeDocument.createElement("label");
     cycleLabel.textContent = "周期";
     cycleGroup.appendChild(cycleLabel);
     
-    const cyclePicker = document.createElement("div");
+    const cyclePicker = activeDocument.createElement("div");
     cyclePicker.className = "id-date-picker";
     
     // 周期类型选择
-    const cycleTypeSelect = document.createElement("select");
+    const cycleTypeSelect = activeDocument.createElement("select");
     const cycleTypes = [
       { value: "monthly", text: "每月" },
       { value: "quarterly", text: "每季度" },
@@ -1981,17 +1955,15 @@ var ImportantDaysView = class extends import_obsidian.ItemView {
       { value: "weekly", text: "每周" }
     ];
     cycleTypes.forEach(ct => {
-      const opt = document.createElement("option");
+      const opt = activeDocument.createElement("option");
       opt.value = ct.value;
       opt.textContent = ct.text;
       cycleTypeSelect.appendChild(opt);
     });
     
     // 周期值输入容器
-    const cycleValueContainer = document.createElement("div");
-    cycleValueContainer.style.display = "flex";
-    cycleValueContainer.style.gap = "8px";
-    cycleValueContainer.style.marginTop = "8px";
+    const cycleValueContainer = activeDocument.createElement("div");
+    cycleValueContainer.className = "id-cycle-value";
     
     // 当前周期值输入引用（避免使用全局 getElementById）
     let cycleValueInput = null;
@@ -2008,9 +1980,9 @@ var ImportantDaysView = class extends import_obsidian.ItemView {
 
       if (cycleType === "monthly") {
         // 每月：选择日期（1-31）
-        const daySelect = document.createElement("select");
+        const daySelect = activeDocument.createElement("select");
         for (let d = 1; d <= 31; d++) {
-          const opt = document.createElement("option");
+          const opt = activeDocument.createElement("option");
           opt.value = String(d);
           opt.textContent = `${d}号`;
           daySelect.appendChild(opt);
@@ -2019,18 +1991,18 @@ var ImportantDaysView = class extends import_obsidian.ItemView {
         cycleValueContainer.appendChild(daySelect);
       } else if (cycleType === "quarterly") {
         // 每季度：选择月份（1-3）和日期
-        const monthSelect = document.createElement("select");
+        const monthSelect = activeDocument.createElement("select");
         for (let m = 1; m <= 3; m++) {
-          const opt = document.createElement("option");
+          const opt = activeDocument.createElement("option");
           opt.value = String(m);
           opt.textContent = `第${m}个月`;
           monthSelect.appendChild(opt);
         }
         cycleMonthInput = monthSelect;
 
-        const daySelect = document.createElement("select");
+        const daySelect = activeDocument.createElement("select");
         for (let d = 1; d <= 31; d++) {
-          const opt = document.createElement("option");
+          const opt = activeDocument.createElement("option");
           opt.value = String(d);
           opt.textContent = `${d}号`;
           daySelect.appendChild(opt);
@@ -2041,16 +2013,16 @@ var ImportantDaysView = class extends import_obsidian.ItemView {
         cycleValueContainer.appendChild(daySelect);
       } else if (cycleType === "yearly") {
         // 每年：选择月份和日期
-        const monthSelect = document.createElement("select");
+        const monthSelect = activeDocument.createElement("select");
         for (let m = 1; m <= 12; m++) {
-          const opt = document.createElement("option");
+          const opt = activeDocument.createElement("option");
           opt.value = String(m);
           opt.textContent = `${m}月`;
           monthSelect.appendChild(opt);
         }
         cycleMonthInput = monthSelect;
 
-        const daySelect = document.createElement("select");
+        const daySelect = activeDocument.createElement("select");
         // 日选项按所选月份动态生成（以闰年为基准，2月给到 29）：
         // 2-29 闰年精确、平年由 createValidDate 钳制为 2-28，与说明文案一致；
         // 此前固定 1-31，可选出「每年 2-29」这类校验器拒绝的组合，保存成功但条目消失
@@ -2060,7 +2032,7 @@ var ImportantDaysView = class extends import_obsidian.ItemView {
           const currentDay = daySelect.value ? parseInt(daySelect.value) : 1;
           daySelect.innerHTML = "";
           for (let d = 1; d <= maxDay; d++) {
-            const opt = document.createElement("option");
+            const opt = activeDocument.createElement("option");
             opt.value = String(d);
             opt.textContent = `${d}日`;
             daySelect.appendChild(opt);
@@ -2076,10 +2048,10 @@ var ImportantDaysView = class extends import_obsidian.ItemView {
         cycleValueContainer.appendChild(daySelect);
       } else if (cycleType === "weekly") {
         // 每周：选择星期几
-        const weekSelect = document.createElement("select");
+        const weekSelect = activeDocument.createElement("select");
         const weekDays = ["周一", "周二", "周三", "周四", "周五", "周六", "周日"];
         weekDays.forEach((wd, i) => {
-          const opt = document.createElement("option");
+          const opt = activeDocument.createElement("option");
           opt.value = String(i + 1);
           opt.textContent = wd;
           weekSelect.appendChild(opt);
@@ -2095,30 +2067,30 @@ var ImportantDaysView = class extends import_obsidian.ItemView {
     cycleGroup.appendChild(cycleValueContainer);
     
     // 周期说明
-    const cycleHint = document.createElement("div");
+    const cycleHint = activeDocument.createElement("div");
     cycleHint.className = "id-modal-hint";
     cycleHint.textContent = "如日期超出当月天数，自动调整为该月最后一天（如2月31号→2月28/29号）";
     cycleGroup.appendChild(cycleHint);
     modalNode.appendChild(cycleGroup);
     
     // ========== 日期选择器（年/月/日下拉框）==========
-    const dateGroup = document.createElement("div");
+    const dateGroup = activeDocument.createElement("div");
     dateGroup.className = "id-modal-group";
-    const dateLabel = document.createElement("label");
+    const dateLabel = activeDocument.createElement("label");
     dateLabel.textContent = "日期";
     dateGroup.appendChild(dateLabel);
     
-    const datePicker = document.createElement("div");
+    const datePicker = activeDocument.createElement("div");
     datePicker.className = "id-date-picker";
     
     // 年份选择
-    const yearSelect = document.createElement("select");
+    const yearSelect = activeDocument.createElement("select");
     const currentYear = new Date().getFullYear();
     // 编辑回填时若 editDay.year 超出默认范围（< 1900 或 > currentYear），扩展上限/下限以容纳
     const yearLower = (editDay && editDay.year && editDay.year < 1900) ? editDay.year : 1900;
     const yearUpper = (editDay && editDay.year && editDay.year > currentYear) ? editDay.year : currentYear;
     for (let y = yearUpper; y >= yearLower; y--) {
-      const opt = document.createElement("option");
+      const opt = activeDocument.createElement("option");
       opt.value = String(y);
       opt.textContent = `${y}年`;
       yearSelect.appendChild(opt);
@@ -2128,9 +2100,9 @@ var ImportantDaysView = class extends import_obsidian.ItemView {
     }
     
     // 月份选择
-    const monthSelect = document.createElement("select");
+    const monthSelect = activeDocument.createElement("select");
     for (let m = 1; m <= 12; m++) {
-      const opt = document.createElement("option");
+      const opt = activeDocument.createElement("option");
       opt.value = String(m);
       opt.textContent = `${m}月`;
       monthSelect.appendChild(opt);
@@ -2142,7 +2114,7 @@ var ImportantDaysView = class extends import_obsidian.ItemView {
     }
     
     // 日期选择
-    const daySelect = document.createElement("select");
+    const daySelect = activeDocument.createElement("select");
     const updateDays = (isLunarMode) => {
       // 保留当前已选日，切换模式后尽量恢复
       const currentDay = daySelect.value ? parseInt(daySelect.value) : 1;
@@ -2150,7 +2122,7 @@ var ImportantDaysView = class extends import_obsidian.ItemView {
         // 农历：每月最多30天
         daySelect.innerHTML = "";
         for (let d = 1; d <= 30; d++) {
-          const opt = document.createElement("option");
+          const opt = activeDocument.createElement("option");
           opt.value = String(d);
           opt.textContent = LUNAR_DAY_NAMES[d - 1] || `${d}日`;
           daySelect.appendChild(opt);
@@ -2165,7 +2137,7 @@ var ImportantDaysView = class extends import_obsidian.ItemView {
         const daysInMonth = new Date(year, month, 0).getDate();
         daySelect.innerHTML = "";
         for (let d = 1; d <= daysInMonth; d++) {
-          const opt = document.createElement("option");
+          const opt = activeDocument.createElement("option");
           opt.value = String(d);
           opt.textContent = `${d}日`;
           daySelect.appendChild(opt);
@@ -2183,7 +2155,7 @@ var ImportantDaysView = class extends import_obsidian.ItemView {
     const updateMonths = (isLunarMode) => {
       monthSelect.innerHTML = "";
       for (let m = 1; m <= 12; m++) {
-        const opt = document.createElement("option");
+        const opt = activeDocument.createElement("option");
         opt.value = String(m);
         opt.textContent = isLunarMode ? LUNAR_MONTH_NAMES[m - 1] + "月" : `${m}月`;
         monthSelect.appendChild(opt);
@@ -2194,25 +2166,24 @@ var ImportantDaysView = class extends import_obsidian.ItemView {
     monthSelect.addEventListener("change", () => updateDays(lunarCheck.checked));
     
     // 农历选项
-    const lunarGroup = document.createElement("div");
+    const lunarGroup = activeDocument.createElement("div");
     lunarGroup.className = "id-modal-checkbox";
-    const lunarCheck = document.createElement("input");
+    const lunarCheck = activeDocument.createElement("input");
     lunarCheck.type = "checkbox";
     lunarCheck.id = "lunar-check";
-    const lunarLabel = document.createElement("span");
+    const lunarLabel = activeDocument.createElement("span");
     lunarLabel.textContent = "农历日期";
     if (editDay && editDay.isLunar) lunarCheck.checked = true;
     lunarGroup.appendChild(lunarCheck);
     lunarGroup.appendChild(lunarLabel);
     
     // 闰月选项
-    const leapMonthGroup = document.createElement("div");
-    leapMonthGroup.className = "id-modal-checkbox";
-    leapMonthGroup.style.marginTop = "8px";
-    const leapMonthCheck = document.createElement("input");
+    const leapMonthGroup = activeDocument.createElement("div");
+    leapMonthGroup.className = "id-modal-checkbox id-leap-month";
+    const leapMonthCheck = activeDocument.createElement("input");
     leapMonthCheck.type = "checkbox";
     leapMonthCheck.id = "leap-month-check";
-    const leapMonthLabel = document.createElement("span");
+    const leapMonthLabel = activeDocument.createElement("span");
     leapMonthLabel.textContent = "闰月（农历生日专用）";
     if (editDay && editDay.isLeapMonth) leapMonthCheck.checked = true;
     leapMonthGroup.appendChild(leapMonthCheck);
@@ -2224,7 +2195,7 @@ var ImportantDaysView = class extends import_obsidian.ItemView {
       updateMonths(isLunar);
       updateDays(isLunar);
       dateLabel.textContent = isLunar ? "农历日期" : "日期";
-      leapMonthGroup.style.display = isLunar && typeSelect.value === "birthday" ? "block" : "none";
+      leapMonthGroup.classList.toggle("is-visible", isLunar && typeSelect.value === "birthday");
     });
     
     lunarGroup.addEventListener("click", (e) => {
@@ -2248,9 +2219,9 @@ var ImportantDaysView = class extends import_obsidian.ItemView {
       if (editDay.isLunar) {
         updateMonths(true);
         dateLabel.textContent = "农历日期";
-        leapMonthGroup.style.display = "block";
+        leapMonthGroup.classList.add("is-visible");
       } else {
-        leapMonthGroup.style.display = "none";
+        leapMonthGroup.classList.remove("is-visible");
       }
     } else {
       // 新建时默认为今天
@@ -2258,7 +2229,7 @@ var ImportantDaysView = class extends import_obsidian.ItemView {
       monthSelect.value = String(today.getMonth() + 1);
       updateDays(false);
       daySelect.value = String(today.getDate());
-      leapMonthGroup.style.display = "none";
+      leapMonthGroup.classList.remove("is-visible");
     }
     
     datePicker.appendChild(yearSelect);
@@ -2266,7 +2237,7 @@ var ImportantDaysView = class extends import_obsidian.ItemView {
     datePicker.appendChild(daySelect);
     dateGroup.appendChild(datePicker);
     // 日期说明
-    const dateHint = document.createElement("div");
+    const dateHint = activeDocument.createElement("div");
     dateHint.className = "id-modal-hint";
     dateHint.textContent = "选择日期的年、月、日";
     dateGroup.appendChild(dateHint);
@@ -2274,7 +2245,7 @@ var ImportantDaysView = class extends import_obsidian.ItemView {
     modalNode.appendChild(lunarGroup);
     modalNode.appendChild(leapMonthGroup);
     // 农历说明
-    const lunarHint = document.createElement("div");
+    const lunarHint = activeDocument.createElement("div");
     lunarHint.className = "id-modal-hint";
     lunarHint.textContent = "勾选后输入农历日期，系统会自动转换为公历显示";
     modalNode.appendChild(lunarHint);
@@ -2290,7 +2261,9 @@ var ImportantDaysView = class extends import_obsidian.ItemView {
       cycleGroup.style.display = isCycle ? "block" : "none";
       dateGroup.style.display = isCycle ? "none" : "block";
       lunarGroup.style.display = isCycle || !isBirthday ? "none" : "block";
-      leapMonthGroup.style.display = !isCycle && isBirthday && lunarCheck.checked ? "block" : "none";
+      // 闰月行的显隐统一走 is-visible 类（见 .id-leap-month）：这里若再写行内
+      // display，会压过类，导致农历勾选变化时的 classList.toggle 失效
+      leapMonthGroup.classList.toggle("is-visible", !isCycle && isBirthday && lunarCheck.checked);
       lunarHint.style.display = isCycle || !isBirthday ? "none" : "block";
 
       // 切到非生日类型时复位农历勾选与公历 UI：
@@ -2338,11 +2311,11 @@ var ImportantDaysView = class extends import_obsidian.ItemView {
     toggleInputMode();
     
     // 按钮
-    const btnGroup = document.createElement("div");
+    const btnGroup = activeDocument.createElement("div");
     btnGroup.className = "id-modal-btns";
-    const cancelBtn = document.createElement("button");
+    const cancelBtn = activeDocument.createElement("button");
     cancelBtn.textContent = "取消";
-    const saveBtn = document.createElement("button");
+    const saveBtn = activeDocument.createElement("button");
     saveBtn.textContent = "保存";
     saveBtn.className = "id-modal-save";
     btnGroup.appendChild(cancelBtn);
@@ -2352,7 +2325,7 @@ var ImportantDaysView = class extends import_obsidian.ItemView {
     // 删除按钮（仅编辑模式显示）
     let deleteBtn = null;
     if (editDay) {
-      deleteBtn = document.createElement("button");
+      deleteBtn = activeDocument.createElement("button");
       deleteBtn.className = "id-modal-delete";
       deleteBtn.textContent = "删除";
       modalNode.appendChild(deleteBtn);
@@ -2390,27 +2363,21 @@ var ImportantDaysView = class extends import_obsidian.ItemView {
         };
 
         const confirmModal = new import_obsidian.Modal(this.app);
-        confirmModal.modalEl.addClass("id-modal");
-        confirmModal.modalEl.style.padding = "0";
-        confirmModal.modalEl.style.width = "360px";
-        confirmModal.modalEl.style.maxWidth = "88vw";
+        confirmModal.modalEl.addClass("id-modal", "id-modal-confirm");
         confirmModal.contentEl.addClass("id-modal-content");
         const sweepConfirm = () => this.sweepModalChrome(confirmModal);
         sweepConfirm();
-        requestAnimationFrame(sweepConfirm);
-        setTimeout(sweepConfirm, 100);
-        const confirmMsg = document.createElement("p");
+        window.requestAnimationFrame(sweepConfirm);
+        window.setTimeout(sweepConfirm, 100);
+        const confirmMsg = activeDocument.createElement("p");
+        confirmMsg.className = "id-confirm-msg";
         confirmMsg.textContent = `确定删除「${editDay.name}」吗？`;
-        confirmMsg.style.margin = "0 0 20px";
-        confirmMsg.style.fontSize = "14px";
-        confirmMsg.style.lineHeight = "1.6";
-        confirmMsg.style.textAlign = "center";
         confirmModal.contentEl.appendChild(confirmMsg);
-        const confirmBtns = document.createElement("div");
+        const confirmBtns = activeDocument.createElement("div");
         confirmBtns.className = "id-modal-btns";
-        const confirmNo = document.createElement("button");
+        const confirmNo = activeDocument.createElement("button");
         confirmNo.textContent = "取消";
-        const confirmYes = document.createElement("button");
+        const confirmYes = activeDocument.createElement("button");
         confirmYes.textContent = "删除";
         confirmYes.className = "id-modal-danger";
         confirmBtns.appendChild(confirmNo);
@@ -2600,7 +2567,7 @@ var ImportantDaysView = class extends import_obsidian.ItemView {
   async onClose() {
     // 清理未触发的长按定时器，避免关闭视图后仍弹出编辑窗口
     for (const t of this._pressTimers) {
-      clearTimeout(t);
+      window.clearTimeout(t);
     }
     this._pressTimers.clear();
     // 清理：视图关闭时关闭仍打开的编辑弹窗（DOM 移除由 Modal 框架管理）
@@ -2613,6 +2580,22 @@ var ImportantDaysView = class extends import_obsidian.ItemView {
 
 // ==================== 设置面板 ====================
 
+// 官方原生分区：Obsidian 1.11+ 用 SettingGroup（组标题 + 组内分隔线都由宿主画），
+// 返回"该往哪儿 append 设置行"的容器。旧版本没有 SettingGroup 时回退成
+// Setting.setHeading() 标题行，行仍直接落在页面上，形状一致、不自己写 CSS。
+// 四个插件共用同一段写法，改一处即可对齐。
+function settingsSection(containerEl, title) {
+  const Group = import_obsidian2.SettingGroup;
+  if (typeof Group === "function") {
+    const group = new Group(containerEl);
+    group.setHeading(title);
+    return group.listEl;
+  }
+  const heading = new import_obsidian2.Setting(containerEl).setName(title);
+  if (typeof heading.setHeading === "function") heading.setHeading();
+  return containerEl;
+}
+
 var ImportantDaysSettingTab = class extends import_obsidian2.PluginSettingTab {
   constructor(app, plugin) {
     super(app, plugin);
@@ -2622,120 +2605,99 @@ var ImportantDaysSettingTab = class extends import_obsidian2.PluginSettingTab {
   display() {
     const { containerEl } = this;
     containerEl.empty();
-    
-    containerEl.createEl("h2", { text: "重要日子设置" });
 
-    // 手动指定数据文件路径（与自动扫描互补，README 所述「手动指定」对应此处）
-    new import_obsidian2.Setting(containerEl)
-      .setName("数据文件路径（手动指定）")
-      .setDesc("通常用下方「重新扫描」自动查找即可。也可手动指定数据文件的库内路径（如：笔记/重要日子.md），修改后立即生效；文件不存在时，添加日子会自动创建")
+    // 这个插件不按周期归档，全部设置只回答一件事：数据写在哪个文件。
+    // 所以只有一个分区，两行——手填路径 / 自动扫描，是同一件事的两个入口
+    const storageEl = settingsSection(containerEl, "数据文件");
+
+    const plugin = this.plugin;
+    let pathText = null;
+    let scanSetting = null;
+    let committed = plugin.settings.dataFile;
+
+    // 扫描结果只重绘这一行的说明文字，不再整页 display()：
+    // 整页重绘会把输入框的光标、焦点和页面滚动位置一起丢掉
+    function paintScanRow() {
+      if (!scanSetting) return;
+      const current = plugin.settings.dataFile;
+      scanSetting.setDesc(current
+        ? `当前：${current}`
+        : "未找到数据文件。点「重新扫描」自动查找；在视图里点「+」添加日子时也会自动创建");
+    }
+
+    new import_obsidian2.Setting(storageEl)
+      .setName("文件路径")
+      .setDesc("数据文件的库内路径（如：笔记/重要日子.md）。通常用下方「重新扫描」自动查找即可；手动指定后失焦或回车才生效，文件不存在时添加日子会自动创建")
       .addText((text) => {
-        const prevValue = this.plugin.settings.dataFile;
-        let pending = prevValue;
+        pathText = text;
+        let pending = committed;
         text
           .setPlaceholder("例如：笔记/重要日子.md")
-          .setValue(this.plugin.settings.dataFile)
+          .setValue(committed)
           .onChange((value) => {
             // 按键过程只暂存规范化结果，不把半成品路径写进配置
             pending = value.trim().replace(/\\/g, "/").replace(/^\/+|\/+$/g, "");
           });
         text.inputEl.addEventListener("change", async () => {
           // 失焦/回车才提交：非空且以 .md 结尾才生效，否则回退旧值并提示
-          if (pending !== prevValue) {
+          if (pending !== committed) {
             if (pending && pending.endsWith(".md")) {
-              this.plugin.settings.dataFile = pending;
-              await this.plugin.saveSettings();
+              committed = pending;
+              plugin.settings.dataFile = pending;
+              await plugin.saveSettings();
             } else {
               new import_obsidian2.Notice("路径需为以 .md 结尾的库内路径（如：笔记/重要日子.md），已保留原值");
-              text.setValue(prevValue);
-              pending = prevValue;
+              text.setValue(committed);
+              pending = committed;
             }
           }
-          // 重读数据并刷新视图，重绘设置页反映新路径状态
-          this.plugin._preloadDays();
-          this.plugin.refreshView();
-          this.display();
+          plugin._preloadDays();
+          plugin.refreshView();
+          paintScanRow();
         });
       });
 
-    const dataFile = this.plugin.settings.dataFile;
-
-    if (dataFile) {
-      // 已有数据文件
-      new import_obsidian2.Setting(containerEl)
-        .setName("数据文件")
-        .setDesc(dataFile)
-        .addButton((btn) => {
-          btn.setButtonText("重新扫描");
-          btn.onClick(async () => {
-            btn.setButtonText("...");
-            btn.setDisabled(true);
-
+    // 原来"已有文件"和"未找到文件"是两段近乎相同的代码，按钮文案还不一样
+    //（「重新扫描」/「扫描」）——同一个动作不该因为当前状态换个名字。合成一段
+    scanSetting = new import_obsidian2.Setting(storageEl)
+      .setName("自动扫描")
+      .addButton((btn) => {
+        btn.setButtonText("重新扫描");
+        btn.onClick(async () => {
+          btn.setButtonText("扫描中…");
+          btn.setDisabled(true);
+          try {
             const hits = await scanForDataFiles(this.app);
             const found = hits.length > 0 ? hits[0] : null;
             if (hits.length > 1) {
-              new import_obsidian2.Notice(`找到 ${hits.length} 个匹配文件，已使用第一个；其他候选可在「数据文件路径」中手动指定：${hits.slice(1, 4).join("、")}`);
+              new import_obsidian2.Notice(`找到 ${hits.length} 个匹配文件，已使用第一个；其他候选可在「文件路径」中手动指定：${hits.slice(1, 4).join("、")}`);
             }
-            if (found && found !== dataFile) {
-              this.plugin.settings.dataFile = found;
-              await this.plugin.saveSettings();
-              this.display();
-              this.plugin.refreshView();
+            if (found && found !== plugin.settings.dataFile) {
+              plugin.settings.dataFile = found;
+              await plugin.saveSettings();
+              // 手填框跟着走，否则扫描换了文件、框里还写着旧路径
+              committed = found;
+              if (pathText) pathText.setValue(found);
+              plugin._preloadDays();
+              plugin.refreshView();
               new import_obsidian2.Notice(`已找到：${found}`);
             } else if (found) {
-              btn.setButtonText("重新扫描");
-              btn.setDisabled(false);
               new import_obsidian2.Notice("当前文件已是最新");
             } else {
-              btn.setButtonText("重新扫描");
-              btn.setDisabled(false);
-              new import_obsidian2.Notice("未找到其他数据文件");
-            }
-          });
-        });
-    } else {
-      // 未找到数据文件
-      new import_obsidian2.Setting(containerEl)
-        .setName("数据文件")
-        .setDesc("未找到数据文件，点击「添加日子」会自动创建")
-        .addButton((btn) => {
-          btn.setButtonText("扫描");
-          btn.onClick(async () => {
-            btn.setButtonText("...");
-            btn.setDisabled(true);
-
-            const hits = await scanForDataFiles(this.app);
-            const found = hits.length > 0 ? hits[0] : null;
-            if (hits.length > 1) {
-              new import_obsidian2.Notice(`找到 ${hits.length} 个匹配文件，已使用第一个；其他候选可在「数据文件路径」中手动指定：${hits.slice(1, 4).join("、")}`);
-            }
-            if (found) {
-              this.plugin.settings.dataFile = found;
-              await this.plugin.saveSettings();
-              this.display();
-              this.plugin.refreshView();
-              new import_obsidian2.Notice(`已找到：${found}`);
-            } else {
-              btn.setButtonText("扫描");
-              btn.setDisabled(false);
               new import_obsidian2.Notice("未找到数据文件");
             }
-          });
+            paintScanRow();
+          } finally {
+            // 原来找到新文件时靠整页重绘换掉按钮，不重绘就会永远停在"..."且禁用
+            btn.setButtonText("重新扫描");
+            btn.setDisabled(false);
+          }
         });
-    }
-    
-    // 操作提示（新用户引导）：编辑方式 + 数据文件可直接手编（本插件数据层的核心卖点）
-    const tips = containerEl.createDiv("id-settings-tips");
-    tips.createEl("h3", { text: "使用提示" });
-    const tipList = tips.createEl("ul");
-    for (const tip of [
-      "手机端长按卡片编辑，电脑端双击卡片编辑；点击右上角「+」添加",
-      "数据文件是普通 Markdown，可直接手动编辑：`- 名称 | 2026-01-01`，生日第三列标注「农历」或「农历闰」",
-      "手改内容、条目备注与自建小节都会被保留；外部改动与插件保存冲突时会拒绝写入并提示刷新",
-      "14 天内的事件倒计时会高亮显示",
-    ]) {
-      tipList.createEl("li", { text: tip });
-    }
+      });
+    paintScanRow();
+
+    // 使用提示那四条已移到 README（编辑方式、手编格式、冲突保护、14 天高亮）：
+    // 设置页只留设置，手机端打开不必先划一整屏才看到输入框
   }
 };
 
@@ -2784,7 +2746,7 @@ async function scanForDataFiles(app) {
       if (h1Found) {
         hits.push(file.path);
       }
-    } catch (e) {
+    } catch {
       // 忽略读取错误
     }
   }
@@ -2841,7 +2803,7 @@ var ImportantDaysPlugin = class extends import_obsidian2.Plugin {
     
     // 添加命令
     this.addCommand({
-      id: "open-important-days",
+      id: "open-view",
       name: "打开重要日子",
       callback: () => this.activateView()
     });
@@ -2957,9 +2919,9 @@ var ImportantDaysPlugin = class extends import_obsidian2.Plugin {
 
     // 防抖：外部连续写入（如同步工具批量更新）时只渲染最后一次
     if (this._refreshTimer) {
-      clearTimeout(this._refreshTimer);
+      window.clearTimeout(this._refreshTimer);
     }
-    this._refreshTimer = setTimeout(() => {
+    this._refreshTimer = window.setTimeout(() => {
       this._refreshTimer = null;
       const leaves = this.app.workspace.getLeavesOfType(VIEW_TYPE_IMPORTANT_DAYS);
       for (const leaf of leaves) {
@@ -2978,11 +2940,11 @@ var ImportantDaysPlugin = class extends import_obsidian2.Plugin {
 
   onunload() {
     if (this._scanTimer) {
-      clearTimeout(this._scanTimer);
+      window.clearTimeout(this._scanTimer);
       this._scanTimer = null;
     }
     if (this._refreshTimer) {
-      clearTimeout(this._refreshTimer);
+      window.clearTimeout(this._refreshTimer);
       this._refreshTimer = null;
     }
     // 关闭本插件的所有视图，避免禁用/重载后残留死视图

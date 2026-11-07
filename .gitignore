@@ -1,0 +1,18 @@
+# 插件运行时数据：含作者本机的数据文件路径设置，绝不入库
+# （一旦被同步进用户库，会让新用户跳过自动扫描并指向一个他们库里不存在的文件）
+data.json
+
+# 本地打包产物与备份
+dist/
+*.zip
+*.bak
+
+# 系统与编辑器
+.DS_Store
+Thumbs.db
+desktop.ini
+*.swp
+
+# 工作区与依赖
+.obsidian/
+node_modules/

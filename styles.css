@@ -2,7 +2,7 @@
  * ============================================================
  * 重要日子插件样式
  * ============================================================
- * 版本：1.4.1
+ * 版本：1.4.2
  * 
  * 设计原则：
  * - 简洁美观的卡片设计
@@ -13,15 +13,39 @@
 
 /* ==================== 容器 ==================== */
 
+/* 宿主 .workspace-leaf-content .view-content 自带 padding:12px 12px 32px 和 overflow:auto。
+   容器再写一份 padding 就叠成双层留白，而且宿主那层还可能另出一条滚动条。
+   官方核心视图（pdf / bases / backlink / outgoing-link）正是这么收的：
+   padding:0 + overflow:hidden + flex 列，把唯一的滚动区交给内部容器。这里照同一口径做。
+   叠一层 .workspace-split 抬到 (0,4,0)，压过宿主 .workspace-split.mod-primary-split .view-content
+   的 (0,3,0)，不靠「插件样式加载在 app.css 之后」取胜。 */
+.workspace-split .workspace-leaf-content[data-type="important-days-view"] .view-content {
+  padding: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
 .important-days-container {
   display: flex;
   flex-direction: column;
   height: 100%;
-  padding: 20px;
-  max-width: 800px;
-  margin: 0 auto;
+  min-height: 0;
+  /* 原来这里是 max-width:800px + margin:0 auto，宽 pane 下左右各空一大条。
+     去掉硬上限让视图铺满可用宽度；内边距只留这一份，用宿主自己的间距 token。 */
+  padding: var(--size-4-3) var(--size-4-4) var(--size-4-4);
+  /* 宿主那层已改 overflow:hidden，容器必须自己能滚：卡片列表在时由 .id-cards-container
+     内部滚（flex:1 + min-height:0 会让它收缩到刚好填满，容器本身不溢出）；
+     数据文件不存在的空态是直接挂在容器上的、不在卡片滚动区里，窗口一矮就靠这里滚，
+     否则会被宿主裁掉且够不着。滚动条同样按宿主办口径隐藏。 */
+  overflow-y: auto;
+  --scrollbar-native-width: none;
   background: transparent;
   box-sizing: border-box;
+}
+
+.important-days-container::-webkit-scrollbar {
+  display: none;
 }
 
 /* ==================== 头部 ==================== */
@@ -140,10 +164,29 @@
 
 .id-cards-container {
   display: grid;
+  /* 原来是 display:grid 却没有 grid-template-columns，等于单列，卡片全竖着堆，
+     内容一高就触发下面那条 overflow-y:auto —— 这是右侧滚动条的根因。
+     改成按可用宽度自动分列：宽 pane 多列铺满，窄侧栏/手机自然退回一列。
+     auto-fill 量的是容器宽度而不是视口，所以桌面右侧栏也能正确退化，
+     不受 @media (max-width:768px) 那类视口断点影响。 */
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  /* 卡片少时别把行拉伸填满整屏高度，否则几张卡片会被撑成几大块 */
+  align-content: start;
   gap: 16px;
   overflow-y: auto;
   flex: 1;
-  padding-right: 4px;
+  min-height: 0;
+  /* 隐藏滚动条但保留滚动。这是宿主自己的口径：view-header-title / setting-group-filters /
+     workspace-tab-header-container-inner / multi-select-input / graph-controls / search-params
+     六处都这么写。宿主 *{scrollbar-width:var(--scrollbar-native-width)} 读这个变量；
+     ::-webkit-scrollbar 只补 display:none —— body.styled-scrollbars 那条设的是
+     width/height/background，没有 display，两者不冲突，不需要更高优先级。
+     原来的 padding-right:4px 是给滚动条让位的，条没了就不留这道缝。 */
+  --scrollbar-native-width: none;
+}
+
+.id-cards-container::-webkit-scrollbar {
+  display: none;
 }
 
 /* ==================== 卡片 ==================== */
@@ -862,26 +905,77 @@
   animation: fadeIn 0.2s ease;
 }
 
-/* ==================== 设置页使用提示 ==================== */
-.id-settings-tips {
-  background: var(--background-secondary);
-  border: 1px solid var(--background-modifier-border);
-  border-radius: 8px;
-  padding: 10px 14px;
-  margin-bottom: 16px;
+/* ==================== 原 JS 行内静态样式 ==================== */
+/* 官方尺子 no-static-styles-assignment 不许在 JS 里写死样式值。下面这些原先都是
+   element.style.xxx = "字面量"，搬进类后视觉不变；选择器一律叠到 (0,2,0) 以上，
+   压过 .id-empty p / .id-modal-checkbox 这类 (0,1,1)/(0,1,0) 的既有规则，
+   不靠加载顺序取胜。动态显隐走 is-visible 类，不再写 style.display。 */
+
+/* 视图初始化/渲染失败时透出的错误详情（onOpen 与 render 两处同款） */
+.id-empty .id-error-msg {
+  color: var(--text-error);
+  font-size: 0.9em;
 }
 
-.id-settings-tips h3 {
-  margin: 0 0 6px;
-  font-size: 14px;
-  color: var(--text-normal);
+/* 数据文件不存在的空态 */
+.id-empty .id-empty-strong {
+  font-weight: bold;
 }
 
-.id-settings-tips ul {
-  margin: 0;
-  padding-left: 18px;
+.id-empty .id-empty-path {
   color: var(--text-muted);
-  font-size: 13px;
+  font-size: 0.9em;
+}
+
+.id-empty .id-empty-divider {
+  margin: 16px 0;
+  border-top: 1px solid var(--background-modifier-border);
+}
+
+.id-empty .id-empty-list {
+  text-align: left;
+  padding-left: 20px;
+  color: var(--text-muted);
   line-height: 1.8;
 }
+
+/* 两个弹窗的宽度。padding:0 已由 .modal.id-modal 的 !important 承担，不再重复 */
+.modal.id-modal.id-modal-day {
+  width: 420px;
+  max-width: 92vw;
+}
+
+.modal.id-modal.id-modal-confirm {
+  width: 360px;
+  max-width: 88vw;
+}
+
+.id-modal .id-confirm-msg {
+  margin: 0 0 20px;
+  font-size: 14px;
+  line-height: 1.6;
+  text-align: center;
+}
+
+/* 周期值输入容器 */
+.id-modal .id-cycle-value {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+/* 闰月选项只在「农历 + 生日」时出现。显示态是 block 而不是 .id-modal-checkbox
+   的 flex——原先行内 display:block 就是这么压的，搬进类后保持同一形状 */
+.id-modal-checkbox.id-leap-month {
+  display: none;
+  margin-top: 8px;
+}
+
+.id-modal-checkbox.id-leap-month.is-visible {
+  display: block;
+}
+
+/* 设置页不在这份样式里：它全用 Obsidian 原生 Setting / SettingGroup，吃宿主自己的
+   变量和间距。原先这里挂着 .id-settings-tips（含 h3、ul 一共三条），那是「使用提示」
+   区块的皮；四条提示已移到 README，选择器随之删掉——别再往回加。 */
 

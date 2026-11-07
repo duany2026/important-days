@@ -1,9 +1,10 @@
 {
 	"id": "important-days",
-	"name": "重要日子",
-	"version": "1.4.1",
+	"name": "Important Days",
+	"version": "1.4.2",
 	"minAppVersion": "0.15.0",
-	"description": "记录生活中的重要日子，支持纪念日、生日倒计时，农历公历互转，属相星座显示",
+	"description": "Count down to anniversaries, birthdays, and recurring events, with Chinese lunar dates, zodiac signs, and Chinese zodiac animals, all stored in a plain Markdown note.",
 	"author": "duany",
+	"authorUrl": "https://github.com/duany2026",
 	"isDesktopOnly": false
 }
