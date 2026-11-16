@@ -1059,11 +1059,23 @@ function applyDaysUpdate(originalContent, currentDays, baseDays) {
     throw new Error("数据文件已被外部修改，为避免覆盖手改内容未保存。请先刷新视图再重试");
   }
 
+  // 已在文件中的行不重复插入：写队列里后到的快照可能仍带着先完成的写入已落盘的
+  // 条目（无 srcLine → 这里会被当新增），按目标行文本判重跳过。UI 侧弹窗本就按
+  // id+type 查重，被跳过的一定是「已落盘的同一条」，不会误伤用户想要的副本；
+  // 判重排除已标记删除的行——删除行上的位置可以被同名新行接替
+  const remainingLineTexts = new Set();
+  for (let i = 0; i < lines.length; i++) {
+    if (action[i] === "delete") continue;
+    const t = lines[i].trim();
+    if (t.startsWith("- ")) remainingLineTexts.add(t);
+  }
+  const dedupedInsertions = insertions.filter((d) => !remainingLineTexts.has(formatDayLine(d).trim()));
+
   // 计算每个小节的插入位置：小节标题行之后最后一条列表行的下一行；
   // 小节不存在时标记为追加新小节
   const insertAfter = /* @__PURE__ */ new Map(); // 行号 -> 待插入行文本数组
   const pendingByType = /* @__PURE__ */ new Map();
-  for (const d of insertions) {
+  for (const d of dedupedInsertions) {
     if (!pendingByType.has(d.type)) pendingByType.set(d.type, []);
     pendingByType.get(d.type).push(dayLineText(d));
   }
