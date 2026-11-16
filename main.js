@@ -1249,14 +1249,18 @@ var ImportantDaysView = class extends import_obsidian.ItemView {
   async saveDays() {
     // 写操作串行化（与 monthly-tasks 的 writeQueue 同思路）：两个视图/弹窗并发保存时，
     // 后一个排队等前一个落盘，否则双方读同一份旧内容、后写方整段重建会把先写方的
-    // 新增行盖掉。链尾挂 then(run, run)：前一个失败不影响后一个执行
-    const run = () => this._saveDaysImpl();
+    // 新增行盖掉。链尾挂 then(run, run)：前一个失败不影响后一个执行。
+    // 快照待写状态：排队期间本视图的 days/_baseDays 可能被别的视图保存后的跨视图
+    // 同步整体替换，若 run 执行时再读 this.days，排队前已并入的编辑会被冲掉
+    const daysSnapshot = this.days.slice();
+    const baseSnapshot = this._baseDays;
+    const run = () => this._saveDaysImpl(daysSnapshot, baseSnapshot);
     const q = (this.plugin._writeQueue || Promise.resolve()).then(run, run);
     this.plugin._writeQueue = q;
     return q;
   }
 
-  async _saveDaysImpl() {
+  async _saveDaysImpl(days, baseDays) {
     const file = this.app.vault.getAbstractFileByPath(this.plugin.settings.dataFile);
     // 标记自身写入，避免 vault.modify 触发的 refreshView 重复渲染（调用方已主动 render）
     this.plugin._selfSaving = true;
@@ -1269,10 +1273,10 @@ var ImportantDaysView = class extends import_obsidian.ItemView {
         if (typeof this.app.vault.process === "function") {
           // vault.process：读-变换-写在同一回调里完成，无 read→modify 之间的竞态窗口
           newContent = await this.app.vault.process(file, (original) =>
-            applyDaysUpdate(original, this.days, this._baseDays));
+            applyDaysUpdate(original, days, baseDays));
         } else {
           const original = await this.app.vault.read(file);
-          newContent = applyDaysUpdate(original, this.days, this._baseDays);
+          newContent = applyDaysUpdate(original, days, baseDays);
           await this.app.vault.modify(file, newContent);
         }
         // 以落盘内容重建列表与基线：新加条目获得 srcLine，后续编辑走原位替换
@@ -1286,7 +1290,7 @@ var ImportantDaysView = class extends import_obsidian.ItemView {
         if (folderPath) {
           await this.ensureFolderExists(folderPath);
         }
-        const content = generateDaysContent(this.days);
+        const content = generateDaysContent(days);
         await this.app.vault.create(this.plugin.settings.dataFile, content);
         const fresh = parseDays(content);
         this.days = fresh.map((d) => ({ ...d }));
