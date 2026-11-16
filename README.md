@@ -31,6 +31,24 @@
 - **深色模式 / 响应式** — 自动适配 Obsidian 主题，适配手机与电脑
 - **自动扫描** — 自动查找包含「# 重要日子」标题的 Markdown 文件作为数据文件
 
+## 界面预览
+
+| 浅色主题 | 深色主题 |
+| --- | --- |
+| ![主视图（浅色主题）](docs/screenshots/plugin-main-view-light.png) | ![主视图（深色主题）](docs/screenshots/plugin-main-view-dark.png) |
+
+14 天内的事件倒计时高亮提醒：
+
+![14 天内事件高亮](docs/screenshots/highlight-within-14-days.png)
+
+数据就是库里的一个 Markdown 文件，按 `# 重要日子` 标题自动识别：
+
+![数据文件格式](docs/screenshots/data-file-format.png)
+
+![命令面板中的「重要日子」命令](docs/screenshots/command-palette.png)
+
+![插件设置页](docs/screenshots/plugin-settings.png)
+
 ## 安装
 
 ### 社区插件市场（推荐）
@@ -113,6 +131,16 @@
 ### Overview
 
 Important Days tracks anniversaries, birthdays, and recurring events in a single plain Markdown note inside your vault. It shows countdowns, anniversary counts, ages, Chinese zodiac animals, and zodiac signs, and converts between Chinese lunar and solar dates. The interface follows Obsidian's theme (light and dark) and works on desktop, phones, and tablets.
+
+### Screenshots
+
+| Light theme | Dark theme |
+| --- | --- |
+| ![Main view (light theme)](docs/screenshots/plugin-main-view-light.png) | ![Main view (dark theme)](docs/screenshots/plugin-main-view-dark.png) |
+
+Entries are stored in a plain Markdown note in your vault:
+
+![Data file format](docs/screenshots/data-file-format.png)
 
 ### Installation
 
