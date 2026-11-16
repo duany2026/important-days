@@ -784,6 +784,12 @@ function parseDays(content) {
         // 解析周期事件
         if (currentType === "cycle") {
           const cycleMatch = dateStr.match(/^(每月|每季度|每年|每周)\s+(.+)$/);
+          if (!cycleMatch) {
+            // 周期小节里的非「每X」行（如误写进来的生日）：与其他非法行同口径提示，
+            // 否则条目被静默跳过，界面上凭空消失且无任何提示
+            warnInvalidDayLine("无法识别周期写法", line);
+            continue;
+          }
           if (cycleMatch) {
             const cycleTypeText = cycleMatch[1];
             const cycleValue = cycleMatch[2].trim();
@@ -835,7 +841,7 @@ function parseDays(content) {
             const effectiveIsLunar = currentType === "anniversary" ? false : isLunar;
             const effectiveIsLeapMonth = currentType === "anniversary" ? false : (isLunar && isLeapMonth);
 
-            days.push({
+            const dayObj = {
               id: `${name}-${dateStr}`,
               name,
               year,
@@ -847,7 +853,14 @@ function parseDays(content) {
               srcLine: lineIdx,
               srcText: trimmed,
               srcType: currentType
-            });
+            };
+            // 日期字段里日期前后的附加文本（如 `约1980-01-01`、`1980-01-01 备注`）
+            // 是用户手写内容：记下来在重写时拼回，否则编辑一次该行尾部备注就被静默删掉
+            const datePrefix = dateStr.slice(0, dateMatch.index);
+            const dateSuffix = dateStr.slice(dateMatch.index + dateMatch[0].length);
+            if (datePrefix) dayObj._datePrefix = datePrefix;
+            if (dateSuffix) dayObj._dateSuffix = dateSuffix;
+            days.push(dayObj);
           } else {
             warnInvalidDayLine("无法识别日期", line);
           }
@@ -941,7 +954,8 @@ function formatDayLine(day) {
     return `- ${day.name} | ${cycleText} ${day.cycleValue}`;
   }
   const dateStr = `${day.year}-${String(day.month).padStart(2, "0")}-${String(day.day).padStart(2, "0")}`;
-  let line = `- ${day.name} | ${dateStr}`;
+  // 手写的日期前后文（_datePrefix/_dateSuffix，见 parseDays）拼回，避免编辑时丢用户备注
+  let line = `- ${day.name} | ${day._datePrefix || ""}${dateStr}${day._dateSuffix || ""}`;
   if (day.isLunar) {
     line += day.type === "birthday" && day.isLeapMonth ? " | 农历闰" : " | 农历";
   }
@@ -1075,7 +1089,9 @@ function applyDaysUpdate(originalContent, currentDays, baseDays) {
         for (let j = i + 1; j < lines.length; j++) {
           if (fencedLine[j]) continue;
           const t = lines[j].trim();
-          if (t.startsWith("## ")) break;
+          // 小节边界与 parseDays 同口径：H1 重置类型、## 进入下个小节，两处都要停，
+          // 否则新条目可能锚进无关 H1 下的 - 行之后，保存后在该处不再被解析
+          if (t.startsWith("# ") || t.startsWith("## ")) break;
           if (t.startsWith("- ")) lastEntryIdx = j;
         }
         break;
@@ -1231,6 +1247,16 @@ var ImportantDaysView = class extends import_obsidian.ItemView {
   }
 
   async saveDays() {
+    // 写操作串行化（与 monthly-tasks 的 writeQueue 同思路）：两个视图/弹窗并发保存时，
+    // 后一个排队等前一个落盘，否则双方读同一份旧内容、后写方整段重建会把先写方的
+    // 新增行盖掉。链尾挂 then(run, run)：前一个失败不影响后一个执行
+    const run = () => this._saveDaysImpl();
+    const q = (this.plugin._writeQueue || Promise.resolve()).then(run, run);
+    this.plugin._writeQueue = q;
+    return q;
+  }
+
+  async _saveDaysImpl() {
     const file = this.app.vault.getAbstractFileByPath(this.plugin.settings.dataFile);
     // 标记自身写入，避免 vault.modify 触发的 refreshView 重复渲染（调用方已主动 render）
     this.plugin._selfSaving = true;
@@ -1239,9 +1265,16 @@ var ImportantDaysView = class extends import_obsidian.ItemView {
         // 原位合并：现场读取最新内容，只增删改解析时识别出的列表行，
         // frontmatter 与用户自建内容原样保留；行内容与解析时不一致（文件已被
         // 外部改动）时 applyDaysUpdate 抛错，整个写入被拒绝，避免覆盖手改
-        const original = await this.app.vault.read(file);
-        const newContent = applyDaysUpdate(original, this.days, this._baseDays);
-        await this.app.vault.modify(file, newContent);
+        let newContent;
+        if (typeof this.app.vault.process === "function") {
+          // vault.process：读-变换-写在同一回调里完成，无 read→modify 之间的竞态窗口
+          newContent = await this.app.vault.process(file, (original) =>
+            applyDaysUpdate(original, this.days, this._baseDays));
+        } else {
+          const original = await this.app.vault.read(file);
+          newContent = applyDaysUpdate(original, this.days, this._baseDays);
+          await this.app.vault.modify(file, newContent);
+        }
         // 以落盘内容重建列表与基线：新加条目获得 srcLine，后续编辑走原位替换
         const fresh = parseDays(newContent);
         this.days = fresh.map((d) => ({ ...d }));
@@ -1544,7 +1577,11 @@ var ImportantDaysView = class extends import_obsidian.ItemView {
     try {
       const card = container.createDiv("id-card");
       // 根据类型添加不同的类名
-      card.addClass(day.type === "birthday" ? "id-card-birthday" : "id-card-anniversary");
+      card.addClass(
+        day.type === "birthday" ? "id-card-birthday"
+        : day.type === "cycle" ? "id-card-cycle"
+        : "id-card-anniversary"
+      );
       
       // 长按编辑：touchcancel（系统手势接管，如来电/下拉通知）也必须取消定时器
       let pressTimer = null;
@@ -2153,6 +2190,8 @@ var ImportantDaysView = class extends import_obsidian.ItemView {
     
     // 更新月份选项（农历用农历月份名）
     const updateMonths = (isLunarMode) => {
+      // 重建前保留已选值：不清的话农历/公历切换、编辑农历生日都会把月份静默重置成正月/1月
+      const keepMonth = monthSelect.value;
       monthSelect.innerHTML = "";
       for (let m = 1; m <= 12; m++) {
         const opt = activeDocument.createElement("option");
@@ -2160,6 +2199,7 @@ var ImportantDaysView = class extends import_obsidian.ItemView {
         opt.textContent = isLunarMode ? LUNAR_MONTH_NAMES[m - 1] + "月" : `${m}月`;
         monthSelect.appendChild(opt);
       }
+      if (keepMonth) monthSelect.value = keepMonth;
     };
     
     yearSelect.addEventListener("change", () => updateDays(lunarCheck.checked));
@@ -2270,10 +2310,8 @@ var ImportantDaysView = class extends import_obsidian.ItemView {
       // 否则残留的勾选会在保存时把「| 农历」标记写进纪念日/周期条目
       if (!isBirthday) {
         if (lunarCheck.checked) {
-          const keepMonth = monthSelect.value;
           lunarCheck.checked = false;
           updateMonths(false);
-          if (keepMonth) monthSelect.value = keepMonth;
           updateDays(false);
           dateLabel.textContent = "日期";
         }
@@ -2575,6 +2613,11 @@ var ImportantDaysView = class extends import_obsidian.ItemView {
       this._activeModal.close();
       this._activeModal = null;
     }
+    // 取消未执行的高度均衡帧：回调里仍持有旧卡片节点，视图关闭后不必再跑
+    if (this._heightRaf) {
+      window.cancelAnimationFrame(this._heightRaf);
+      this._heightRaf = null;
+    }
   }
 };
 
@@ -2639,14 +2682,18 @@ var ImportantDaysSettingTab = class extends import_obsidian2.PluginSettingTab {
             pending = value.trim().replace(/\\/g, "/").replace(/^\/+|\/+$/g, "");
           });
         text.inputEl.addEventListener("change", async () => {
-          // 失焦/回车才提交：非空且以 .md 结尾才生效，否则回退旧值并提示
+          // 失焦/回车才提交：非空、以 .md 结尾且不含 .. 段才生效，否则回退旧值并提示。
+          // .. 段能把路径指出库根目录（桌面端 file adapter 不做该防护）；.MD 大小写不敏感
+          const pathOk = pending
+            && pending.toLowerCase().endsWith(".md")
+            && !pending.split("/").some((seg) => seg === "..");
           if (pending !== committed) {
-            if (pending && pending.endsWith(".md")) {
+            if (pathOk) {
               committed = pending;
               plugin.settings.dataFile = pending;
               await plugin.saveSettings();
             } else {
-              new import_obsidian2.Notice("路径需为以 .md 结尾的库内路径（如：笔记/重要日子.md），已保留原值");
+              new import_obsidian2.Notice("路径需为以 .md 结尾且不含 .. 的库内路径（如：笔记/重要日子.md），已保留原值");
               text.setValue(committed);
               pending = committed;
             }
