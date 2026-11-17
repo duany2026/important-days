@@ -1174,7 +1174,9 @@ function applyDaysUpdate(originalContent, currentDays, baseDays) {
     const body = result.replace(/^\uFEFF/, "");
     // 文件以 frontmatter（--- YAML 块）开头时标题必须插在其后，
     // 否则 YAML 被顶进正文、属性全部失效
-    const fm = body.match(/^(---[ \t]*\r?\n[\s\S]*?^---[ \t]*\r?$)/m);
+    // 不要加 m 标志且首行必须就是 ---：加了 m 后，文件中间的两个 `---` 水平线
+    // 会被当成 frontmatter 区间，拼接时丢掉前面的正文
+    const fm = body.match(/^(---[ \t]*\r?\n[\s\S]*?\r?\n---[ \t]*)/);
     if (fm) {
       const after = body.slice(fm[1].length).replace(/^(\r?\n)+/, "");
       result = fm[1] + eol + `# 重要日子${eol}${eol}${after}`;
@@ -1512,10 +1514,17 @@ var ImportantDaysView = class extends import_obsidian.ItemView {
       const today = new Date();
       today.setHours(0, 0, 0, 0);
       const year = today.getFullYear();
-      let next = createValidDate(year, day.month - 1, day.day);
-      if (next < today) {
-        // 2/29 跨到非闰年需钳制为 2/28；setFullYear 会产生非法日期滚动到 3/1
-        next = createValidDate(year + 1, day.month - 1, day.day);
+      // 起始日在未来（登记将来）：下一次就是起始日，锚到今年会落在起始年之前
+      const startDate = createValidDate(day.year, day.month - 1, day.day);
+      let next;
+      if (startDate > today) {
+        next = startDate;
+      } else {
+        next = createValidDate(year, day.month - 1, day.day);
+        if (next < today) {
+          // 2/29 跨到非闰年需钳制为 2/28；setFullYear 会产生非法日期滚动到 3/1
+          next = createValidDate(year + 1, day.month - 1, day.day);
+        }
       }
       return getDaysUntil(next);
     }
@@ -1524,7 +1533,14 @@ var ImportantDaysView = class extends import_obsidian.ItemView {
   getNextBirthday(day) {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-    
+
+    // 起始日在未来（登记将来，如预产期）：下一次生日就是起始日，
+    // 锚到今年会落在起始日之前
+    const startSolar = day.isLunar
+      ? lunarToSolar(day.year, day.month, day.day, day.isLeapMonth && getLeapMonth(day.year) === day.month)
+      : createValidDate(day.year, day.month - 1, day.day);
+    if (startSolar && !isNaN(startSolar.getTime()) && startSolar > today) return startSolar;
+
     // 判断是否是闰年2月29日生日（公历）
     const isLeapBirthday = !day.isLunar && isLeapDayBirthday(day.month, day.day);
     
@@ -1851,10 +1867,17 @@ var ImportantDaysView = class extends import_obsidian.ItemView {
       
       // 下一次具体日期
       const nextYear = today.getFullYear();
-      let next = createValidDate(nextYear, day.month - 1, day.day);
-      if (next < today) {
-        // 2/29 跨到非闰年需钳制为 2/28；setFullYear 会产生非法日期滚动到 3/1
-        next = createValidDate(nextYear + 1, day.month - 1, day.day);
+      // 起始日在未来（登记将来）：下一次就是起始日，锚到今年会落在起始年之前
+      const startDate = createValidDate(day.year, day.month - 1, day.day);
+      let next;
+      if (startDate > today) {
+        next = startDate;
+      } else {
+        next = createValidDate(nextYear, day.month - 1, day.day);
+        if (next < today) {
+          // 2/29 跨到非闰年需钳制为 2/28；setFullYear 会产生非法日期滚动到 3/1
+          next = createValidDate(nextYear + 1, day.month - 1, day.day);
+        }
       }
       const weekDayNext = getWeekDay(next);
       const nextRow = dateRow.createDiv("id-card-next");
@@ -2169,9 +2192,9 @@ var ImportantDaysView = class extends import_obsidian.ItemView {
       opt.textContent = `${y}年`;
       yearSelect.appendChild(opt);
     }
-    if (editDay) {
-      yearSelect.value = String(editDay.year);
-    }
+    // 选项按降序铺，第一个选项是 yearUpper；新增时不显式赋值会默认选到
+    // 上限年（currentYear+50），不检查直接保存就把日子记到 50 年后
+    yearSelect.value = String(editDay && editDay.year ? editDay.year : currentYear);
     
     // 月份选择
     const monthSelect = activeDocument.createElement("select");
