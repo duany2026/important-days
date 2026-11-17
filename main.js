@@ -4,7 +4,7 @@
  * ============================================================
  *
  * 插件功能：记录生活中的重要日子，支持纪念日、生日倒计时
- * 版本：1.4.2
+ * 版本：1.4.4
  * 作者：duany
  * 许可证：MIT
  *
@@ -172,7 +172,11 @@ function getMonthsPassed(startDate) {
   const start = new Date(startDate);
   let months = (today.getFullYear() - start.getFullYear()) * 12;
   months += today.getMonth() - start.getMonth();
-  if (today.getDate() < start.getDate()) {
+  // 起始日超过本月实际天数时按「月末等价」处理：1/31 起的条目在 2/28（或 29）
+  // 就已满月，不因 today.getDate() < 31 多算一个月
+  const daysInTodayMonth = getDaysInMonth(today.getFullYear(), today.getMonth());
+  const effectiveStartDay = Math.min(start.getDate(), daysInTodayMonth);
+  if (today.getDate() < effectiveStartDay) {
     months--;
   }
   return Math.max(0, months);
@@ -439,27 +443,19 @@ var CONSTELLATIONS = [
 
 /** 农历数据（1900-2100年） */
 var LUNAR_INFO = [
-  19416, 19168, 42352, 21717, 53856, 55632, 91476, 22176, 39632, 21970,
-  19168, 42422, 42192, 53840, 119381, 46400, 54944, 44450, 38320, 84343,
-  18800, 42160, 46261, 27216, 27968, 109396, 11104, 38256, 21234, 18800,
-  25958, 54432, 59984, 28309, 23248, 11104, 100067, 37600, 116951, 51536,
-  54432, 120998, 46416, 22176, 107956, 9680, 37584, 53938, 43344, 46423,
-  27808, 46416, 86869, 19872, 42448, 83315, 21200, 43432, 59728, 27296,
-  44710, 43856, 19296, 43748, 42352, 21088, 62051, 55632, 23383, 22176,
-  38608, 19925, 19152, 42192, 54484, 53840, 54616, 46400, 46496, 103846,
-  38320, 18864, 43380, 42160, 45690, 27216, 27968, 44870, 43872, 38256,
-  19189, 18800, 25776, 29859, 59984, 27480, 21952, 43872, 38613, 37600,
-  51552, 55636, 54432, 55888, 30034, 22176, 43959, 9680, 37584, 51893,
-  43344, 46240, 47780, 44368, 21977, 19360, 42416, 86390, 21168, 43312,
-  31060, 27296, 44368, 23378, 19296, 42726, 42208, 53856, 60005, 54576,
-  23200, 30371, 38608, 19415, 19152, 42192, 118966, 53840, 54560, 56645,
-  46496, 22224, 21938, 18864, 42359, 42160, 43600, 111189, 27936, 44448,
-  84835, 37744, 18936, 18800, 25776, 92326, 59984, 27424, 108228, 43744,
-  41696, 53987, 51552, 54615, 54432, 55888, 23893, 22176, 42704, 21972,
-  21200, 43448, 43344, 46240, 46758, 44368, 21920, 43940, 42416, 21168,
-  45683, 26928, 29495, 27296, 44368, 84821, 19296, 42352, 21732, 53600,
-  59752, 54560, 55968, 92838, 22224, 19168, 43476, 41680, 53584, 62034,
-54560
+  48424,29984,59984,45733,25776,43440,109156,22176,46480,47778,29984,55894,45648,42160,107701,10960,
+  22192,23378,55952,125223,59680,53840,53973,42336,11104,109908,27968,60048,62626,59680,27238,21168,
+  42352,103781,46496,27968,95763,29840,110903,43312,21168,86454,43728,22176,121428,47680,46224,54450,
+  43344,43735,21344,43728,109733,23328,55888,125475,54432,22872,43376,21856,22358,44368,27936,30036,
+  59984,25760,25843,43440,44455,22176,46736,47909,46368,45648,45748,42160,43704,10960,22224,88726,
+  55952,55584,59732,53840,58586,42336,11104,12118,27984,60048,62757,59680,53856,21219,42352,44392,
+  13728,27984,46741,29840,26928,43444,21168,42416,43746,22176,56663,47680,46224,54581,43344,21200,
+  21972,43856,47785,23840,55888,125094,54432,51536,43492,21856,43856,44450,27936,30294,29264,25776,
+  25973,51888,21920,22243,46736,62763,46368,45648,118966,42160,19120,11189,23248,46752,55970,55584,
+  59991,53840,42320,107733,19296,23376,93475,60560,63784,59680,53856,86374,42352,19808,79444,30032,
+  29840,29875,26928,43703,21168,42416,43941,22176,46672,47780,46240,55640,43344,21200,22230,43856,
+  23200,23892,55888,54432,58579,51552,52455,21856,43856,109861,27936,59984,29348,26800,27000,19120,
+  21936,87398,46752,29984,47444,46160,43184,42226,19120
 ];
 
 /**
@@ -495,7 +491,7 @@ function getLeapMonth(year) {
  * 获取农历月天数
  */
 function getLunarMonthDays(year, month) {
-  return LUNAR_INFO[year - 1900] & (65536 >> month) ? 30 : 29;
+  return LUNAR_INFO[year - 1900] & (1 << (month + 3)) ? 30 : 29;
 }
 
 /**
@@ -718,6 +714,31 @@ function isValidCycleValue(cycleType, value) {
 }
 
 /**
+ * 代码围栏遮罩：返回与 lines 等长的布尔数组，true 表示该行在围栏内（含开闭行）。
+ * 支持 ``` 与 ~~~、≥3 字符；闭围栏需同字符且长度不小于开围栏
+ * （``` 无法关闭 ~~~ 或 ````，反之亦然）。
+ */
+function fenceMask(lines) {
+  const mask = new Array(lines.length).fill(false);
+  let fence = null;
+  for (let i = 0; i < lines.length; i++) {
+    const t = lines[i].trim();
+    if (fence) {
+      mask[i] = true;
+      const close = new RegExp(`^${fence.char}{${fence.length},}$`);
+      if (close.test(t)) fence = null;
+    } else {
+      const open = t.match(/^(`{3,}|~{3,})/);
+      if (open) {
+        fence = { char: open[1][0], length: open[1].length };
+        mask[i] = true;
+      }
+    }
+  }
+  return mask;
+}
+
+/**
  * 解析日子数据
  * 每条记录附带 srcLine/srcText/srcType（在文件中的行位置与原始行文本）和 _key（行身份），
  * 供 saveDays 做原位行级合并与写冲突检测，避免整体重写覆盖文件中的其他内容
@@ -730,18 +751,14 @@ function parseDays(content) {
   // 未进入已知小节（## 生日/纪念日/周期…）前不解析任何列表行；
   // 未识别小节（如用户自建的 ## 待办事项）不继承上一个类型，其中的行原样保留、不参与合并
   let currentType = null;
-  // 代码块内的标题/列表行不参与解析
-  let inCodeFence = false;
+  // 代码块内的标题/列表行不参与解析（``` 与 ~~~、含 4+ 字符围栏）
+  const fenced = fenceMask(lines);
 
   for (let lineIdx = 0; lineIdx < lines.length; lineIdx++) {
     const line = lines[lineIdx];
     const trimmed = line.trim();
 
-    if (trimmed.startsWith("```")) {
-      inCodeFence = !inCodeFence;
-      continue;
-    }
-    if (inCodeFence) continue;
+    if (fenced[lineIdx]) continue;
 
     // H1（含文件标题「# 重要日子」）重置类型：其后未进入 ## 小节前的行不解析
     if (trimmed.startsWith("# ")) {
@@ -820,13 +837,18 @@ function parseDays(content) {
           }
         } else {
           // 解析日期
-          const dateMatch = dateStr.match(/(\d{4})-(\d{1,2})-(\d{1,2})/);
+          const dateMatch = dateStr.match(/(?<!\d)(\d{4})-(\d{1,2})-(\d{1,2})(?!\d)/);
           if (dateMatch) {
             const year = parseInt(dateMatch[1]);
             const month = parseInt(dateMatch[2]);
             const day = parseInt(dateMatch[3]);
 
-            // 校验日期合法性（月份 1-12，日 1-31，且 new Date 不滚动到下月）
+            // 校验日期合法性（年份限农历表覆盖区间 1900-2100，防「12020-01-05」
+            // 这类笔误被截成 2020 年；月份 1-12，日 1-31，且 new Date 不滚动到下月）
+            if (year < 1900 || year > 2100) {
+              warnInvalidDayLine("年份超出支持范围（1900-2100）", line);
+              continue;
+            }
             if (month < 1 || month > 12 || day < 1 || day > 31) {
               warnInvalidDayLine("非法日期", line);
               continue;
@@ -951,7 +973,9 @@ function generateDaysContent(days) {
 function formatDayLine(day) {
   if (day.type === "cycle") {
     const cycleText = { monthly: "每月", quarterly: "每季度", yearly: "每年", weekly: "每周" }[day.cycleType] || "";
-    return `- ${day.name} | ${cycleText} ${day.cycleValue}`;
+    // 类型由生日/纪念日改成周期事件时，原日期字段上的手写备注（_datePrefix/_dateSuffix）
+    // 无处可放：并到名称字段保住文字，比静默丢掉强（周期值只认数字形态，不能挂备注）
+    return `- ${day._datePrefix || ""}${day.name}${day._dateSuffix || ""} | ${cycleText} ${day.cycleValue}`;
   }
   const dateStr = `${day.year}-${String(day.month).padStart(2, "0")}-${String(day.day).padStart(2, "0")}`;
   // 手写的日期前后文（_datePrefix/_dateSuffix，见 parseDays）拼回，避免编辑时丢用户备注
@@ -985,18 +1009,9 @@ function applyDaysUpdate(originalContent, currentDays, baseDays) {
   const usesCRLF = originalContent.includes("\r\n");
   const dayLineText = (d) => formatDayLine(d) + (usesCRLF ? "\r" : "");
   const SECTION_LABELS = { anniversary: "纪念日", birthday: "生日", cycle: "周期事件" };
-  // 代码块行遮罩（与 parseDays 的 ``` 开关同口径）：块内的 ## / # 行不算小节标题，
+  // 代码块行遮罩（与 parseDays 的围栏识别同口径）：块内的 ## / # 行不算小节标题，
   // 新条目不能锚进代码块——否则保存后重新解析时该行被跳过，条目凭空消失
-  const fencedLine = new Array(lines.length).fill(false);
-  let fenceOpen = false;
-  for (let i = 0; i < lines.length; i++) {
-    const t = lines[i].trim();
-    if (t.startsWith("```")) {
-      fenceOpen = !fenceOpen;
-      continue;
-    }
-    fencedLine[i] = fenceOpen;
-  }
+  const fencedLine = fenceMask(lines);
 
   // 每行的动作：null=原样保留；{day}=替换为该条目；"delete"=删除该行
   const action = new Array(lines.length).fill(null);
@@ -1146,20 +1161,30 @@ function applyDaysUpdate(originalContent, currentDays, baseDays) {
   // 保证 IDY-4 的 H1 精确扫描此后仍能找到该数据文件。
   // H1 检查同样跳过代码块（与 parseDays/小节定位同口径）：贴进文件的格式示例
   // 里的「# 重要日子」不算真实标题；逐行 trim 后匹配（trim 会剥掉 BOM 与 CRLF 的 \r）
+  const h1Lines = result.split("\n");
+  const h1Fence = fenceMask(h1Lines);
   let hasH1 = false;
-  let fenceOpenH1 = false;
-  for (const ln of result.split("\n")) {
-    if (ln.trim().startsWith("```")) {
-      fenceOpenH1 = !fenceOpenH1;
-      continue;
-    }
-    if (!fenceOpenH1 && /^#\s*重要日子$/.test(ln.trim())) {
+  for (let i = 0; i < h1Lines.length; i++) {
+    if (!h1Fence[i] && /^#\s*重要日子$/.test(h1Lines[i].trim())) {
       hasH1 = true;
       break;
     }
   }
   if (!hasH1) {
-    result = `# 重要日子${eol}${eol}${result.replace(/^\uFEFF/, "")}`;
+    const body = result.replace(/^\uFEFF/, "");
+    // 文件以 frontmatter（--- YAML 块）开头时标题必须插在其后，
+    // 否则 YAML 被顶进正文、属性全部失效
+    // 三条边界都不能省：不加 m（否则文件中间的两条 `---` 水平线会被当成
+    // frontmatter 区间，拼接丢正文）；闭合行的 `---` 后必须紧跟行尾/文件尾
+    // （否则 `---custom: v` 这类键会被当闭合行）；中间内容整体可选
+    // （否则 `---\n---` 空属性区匹配不上，标题插到属性区上面）
+    const fm = body.match(/^(---[ \t]*\r?\n(?:[\s\S]*?\r?\n)?---[ \t]*)(?=\r?\n|$)/);
+    if (fm) {
+      const after = body.slice(fm[1].length).replace(/^(\r?\n)+/, "");
+      result = fm[1] + eol + `# 重要日子${eol}${eol}${after}`;
+    } else {
+      result = `# 重要日子${eol}${eol}${body}`;
+    }
   }
   return result;
 }
@@ -1433,7 +1458,7 @@ var ImportantDaysView = class extends import_obsidian.ItemView {
       const p1 = empty.createEl("p");
       p1.textContent = "还没有记录任何日子";
       const p2 = empty.createEl("p");
-      p2.textContent = "点击右上角「添加」开始记录";
+      p2.textContent = "点击右上角「添加」开始记录，首次添加会自动创建数据文件";
     }
   }
   
@@ -1491,10 +1516,17 @@ var ImportantDaysView = class extends import_obsidian.ItemView {
       const today = new Date();
       today.setHours(0, 0, 0, 0);
       const year = today.getFullYear();
-      let next = createValidDate(year, day.month - 1, day.day);
-      if (next < today) {
-        // 2/29 跨到非闰年需钳制为 2/28；setFullYear 会产生非法日期滚动到 3/1
-        next = createValidDate(year + 1, day.month - 1, day.day);
+      // 起始日在未来（登记将来）：下一次就是起始日，锚到今年会落在起始年之前
+      const startDate = createValidDate(day.year, day.month - 1, day.day);
+      let next;
+      if (startDate > today) {
+        next = startDate;
+      } else {
+        next = createValidDate(year, day.month - 1, day.day);
+        if (next < today) {
+          // 2/29 跨到非闰年需钳制为 2/28；setFullYear 会产生非法日期滚动到 3/1
+          next = createValidDate(year + 1, day.month - 1, day.day);
+        }
       }
       return getDaysUntil(next);
     }
@@ -1503,7 +1535,14 @@ var ImportantDaysView = class extends import_obsidian.ItemView {
   getNextBirthday(day) {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-    
+
+    // 起始日在未来（登记将来，如预产期）：下一次生日就是起始日，
+    // 锚到今年会落在起始日之前
+    const startSolar = day.isLunar
+      ? lunarToSolar(day.year, day.month, day.day, day.isLeapMonth && getLeapMonth(day.year) === day.month)
+      : createValidDate(day.year, day.month - 1, day.day);
+    if (startSolar && !isNaN(startSolar.getTime()) && startSolar > today) return startSolar;
+
     // 判断是否是闰年2月29日生日（公历）
     const isLeapBirthday = !day.isLunar && isLeapDayBirthday(day.month, day.day);
     
@@ -1830,10 +1869,17 @@ var ImportantDaysView = class extends import_obsidian.ItemView {
       
       // 下一次具体日期
       const nextYear = today.getFullYear();
-      let next = createValidDate(nextYear, day.month - 1, day.day);
-      if (next < today) {
-        // 2/29 跨到非闰年需钳制为 2/28；setFullYear 会产生非法日期滚动到 3/1
-        next = createValidDate(nextYear + 1, day.month - 1, day.day);
+      // 起始日在未来（登记将来）：下一次就是起始日，锚到今年会落在起始年之前
+      const startDate = createValidDate(day.year, day.month - 1, day.day);
+      let next;
+      if (startDate > today) {
+        next = startDate;
+      } else {
+        next = createValidDate(nextYear, day.month - 1, day.day);
+        if (next < today) {
+          // 2/29 跨到非闰年需钳制为 2/28；setFullYear 会产生非法日期滚动到 3/1
+          next = createValidDate(nextYear + 1, day.month - 1, day.day);
+        }
       }
       const weekDayNext = getWeekDay(next);
       const nextRow = dateRow.createDiv("id-card-next");
@@ -2141,16 +2187,16 @@ var ImportantDaysView = class extends import_obsidian.ItemView {
     const currentYear = new Date().getFullYear();
     // 编辑回填时若 editDay.year 超出默认范围（< 1900 或 > currentYear），扩展上限/下限以容纳
     const yearLower = (editDay && editDay.year && editDay.year < 1900) ? editDay.year : 1900;
-    const yearUpper = (editDay && editDay.year && editDay.year > currentYear) ? editDay.year : currentYear;
+    const yearUpper = (editDay && editDay.year && editDay.year > currentYear + 50) ? editDay.year : currentYear + 50;
     for (let y = yearUpper; y >= yearLower; y--) {
       const opt = activeDocument.createElement("option");
       opt.value = String(y);
       opt.textContent = `${y}年`;
       yearSelect.appendChild(opt);
     }
-    if (editDay) {
-      yearSelect.value = String(editDay.year);
-    }
+    // 选项按降序铺，第一个选项是 yearUpper；新增时不显式赋值会默认选到
+    // 上限年（currentYear+50），不检查直接保存就把日子记到 50 年后
+    yearSelect.value = String(editDay && editDay.year ? editDay.year : currentYear);
     
     // 月份选择
     const monthSelect = activeDocument.createElement("select");
@@ -2303,7 +2349,7 @@ var ImportantDaysView = class extends import_obsidian.ItemView {
     // 农历说明
     const lunarHint = activeDocument.createElement("div");
     lunarHint.className = "id-modal-hint";
-    lunarHint.textContent = "勾选后输入农历日期，系统会自动转换为公历显示";
+    lunarHint.textContent = "勾选后输入农历日期，系统会自动转换为公历显示；年份填农历年（腊月出生注意和公历年差一年）";
     modalNode.appendChild(lunarHint);
     
     // ========== 类型切换逻辑 ==========
@@ -2794,14 +2840,11 @@ async function scanForDataFiles(app) {
       // 与 metadataCache 的 headings 口径一致：代码块内的 H1 不算标题（逐行 trim 后匹配，
       // trim 会剥掉 BOM 与 CRLF 的 \r）
       const content = (await app.vault.cachedRead(file)).replace(/^\uFEFF/, "");
+      const scanLines = content.split("\n");
+      const scanFence = fenceMask(scanLines);
       let h1Found = false;
-      let fenceOpen = false;
-      for (const ln of content.split("\n")) {
-        if (ln.trim().startsWith("```")) {
-          fenceOpen = !fenceOpen;
-          continue;
-        }
-        if (!fenceOpen && H1_RE.test(ln.trim())) {
+      for (let i = 0; i < scanLines.length; i++) {
+        if (!scanFence[i] && H1_RE.test(scanLines[i].trim())) {
           h1Found = true;
           break;
         }
@@ -2832,21 +2875,24 @@ var ImportantDaysPlugin = class extends import_obsidian2.Plugin {
     if (!this.settings.dataFile) {
       this.settings.dataFile = "重要日子.md";
       await this.saveSettings();
-      // 句柄留存以便 onunload 清理；扫描失败不产生 unhandled rejection
-      this._scanTimer = window.setTimeout(async () => {
-        try {
-          const hits = await scanForDataFiles(this.app);
-          const found = hits.length > 0 ? hits[0] : null;
-          if (found && found !== this.settings.dataFile) {
-            this.settings.dataFile = found;
-            await this.saveSettings();
-            this._preloadDays();
-            this.refreshView();
+      // 等布局就绪再扫：冷启动时 metadataCache 未建好，立即扫会漏掉
+      // 本可命中的数据文件；句柄留存以便 onunload 清理，扫描失败不产生 unhandled rejection
+      this.app.workspace.onLayoutReady(() => {
+        this._scanTimer = window.setTimeout(async () => {
+          try {
+            const hits = await scanForDataFiles(this.app);
+            const found = hits.length > 0 ? hits[0] : null;
+            if (found && found !== this.settings.dataFile) {
+              this.settings.dataFile = found;
+              await this.saveSettings();
+              this._preloadDays();
+              this.refreshView();
+            }
+          } catch (e) {
+            console.error("自动扫描数据文件失败:", e);
           }
-        } catch (e) {
-          console.error("自动扫描数据文件失败:", e);
-        }
-      }, 0);
+        }, 0);
+      });
     }
 
     // 数据缓存：用于视图打开时立即显示，避免白屏等待
@@ -3010,8 +3056,8 @@ var ImportantDaysPlugin = class extends import_obsidian2.Plugin {
       window.clearTimeout(this._refreshTimer);
       this._refreshTimer = null;
     }
-    // 关闭本插件的所有视图，避免禁用/重载后残留死视图
-    this.app.workspace.detachLeavesOfType(VIEW_TYPE_IMPORTANT_DAYS);
+    // 不 detachLeavesOfType：插件更新/重载时保留用户摆好的面板位置
+    // （与 monthly-tasks 同口径；视图死叶在重新启用时会被重新激活渲染）
   }
 };
 
