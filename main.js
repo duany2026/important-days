@@ -4,7 +4,7 @@
  * ============================================================
  *
  * 插件功能：记录生活中的重要日子，支持纪念日、生日倒计时
- * 版本：1.4.4
+ * 版本：1.4.5
  * 作者：duany
  * 许可证：MIT
  *
@@ -717,6 +717,8 @@ function isValidCycleValue(cycleType, value) {
  * 代码围栏遮罩：返回与 lines 等长的布尔数组，true 表示该行在围栏内（含开闭行）。
  * 支持 ``` 与 ~~~、≥3 字符；闭围栏需同字符且长度不小于开围栏
  * （``` 无法关闭 ~~~ 或 ````，反之亦然）。
+ * 反引号开栏行的其余部分不能再出现反引号（CommonMark 规则）：`` ```代码``` 说明 `` 这种
+ * 行首的行内代码不是围栏，误当开栏会把它后面直到文件尾的条目全部藏掉。
  */
 function fenceMask(lines) {
   const mask = new Array(lines.length).fill(false);
@@ -728,8 +730,8 @@ function fenceMask(lines) {
       const close = new RegExp(`^${fence.char}{${fence.length},}$`);
       if (close.test(t)) fence = null;
     } else {
-      const open = t.match(/^(`{3,}|~{3,})/);
-      if (open) {
+      const open = t.match(/^(`{3,}|~{3,})(.*)$/);
+      if (open && !(open[1][0] === "`" && open[2].includes("`"))) {
         fence = { char: open[1][0], length: open[1].length };
         mask[i] = true;
       }
@@ -837,7 +839,11 @@ function parseDays(content) {
           }
         } else {
           // 解析日期
-          const dateMatch = dateStr.match(/(?<!\d)(\d{4})-(\d{1,2})-(\d{1,2})(?!\d)/);
+          // 年份前不能紧贴数字（防「12020-01-05」被截成 2020 年）。这里用 (?:^|\D) 吃掉前一个
+          // 非数字字符，不用后行断言 (?<!\d)：iOS 16.4 以下的内核不支持后行断言（官方审核工具
+          // 的 regex-lookbehind 规则按 error 报），不支持的正则字面量是语法错误，整个 main.js
+          // 都加载不了。被吃掉的那个字符在下面算备注前缀时补回去
+          const dateMatch = dateStr.match(/(?:^|\D)(\d{4})-(\d{1,2})-(\d{1,2})(?!\d)/);
           if (dateMatch) {
             const year = parseInt(dateMatch[1]);
             const month = parseInt(dateMatch[2]);
@@ -878,7 +884,8 @@ function parseDays(content) {
             };
             // 日期字段里日期前后的附加文本（如 `约1980-01-01`、`1980-01-01 备注`）
             // 是用户手写内容：记下来在重写时拼回，否则编辑一次该行尾部备注就被静默删掉
-            const datePrefix = dateStr.slice(0, dateMatch.index);
+            const dateStart = dateMatch.index + (/^\D/.test(dateMatch[0]) ? 1 : 0);
+            const datePrefix = dateStr.slice(0, dateStart);
             const dateSuffix = dateStr.slice(dateMatch.index + dateMatch[0].length);
             if (datePrefix) dayObj._datePrefix = datePrefix;
             if (dateSuffix) dayObj._dateSuffix = dateSuffix;
@@ -974,8 +981,11 @@ function formatDayLine(day) {
   if (day.type === "cycle") {
     const cycleText = { monthly: "每月", quarterly: "每季度", yearly: "每年", weekly: "每周" }[day.cycleType] || "";
     // 类型由生日/纪念日改成周期事件时，原日期字段上的手写备注（_datePrefix/_dateSuffix）
-    // 无处可放：并到名称字段保住文字，比静默丢掉强（周期值只认数字形态，不能挂备注）
-    return `- ${day._datePrefix || ""}${day.name}${day._dateSuffix || ""} | ${cycleText} ${day.cycleValue}`;
+    // 无处可放：并到名称字段保住文字，比静默丢掉强（周期值只认数字形态，不能挂备注）。
+    // 一律接在名称后面、空格隔开：日期前的备注（如「约」）直接顶在名称前会读成「约妈妈」
+    const cycleName = [day.name, (day._datePrefix || "").trim(), (day._dateSuffix || "").trim()]
+      .filter(Boolean).join(" ");
+    return `- ${cycleName} | ${cycleText} ${day.cycleValue}`;
   }
   const dateStr = `${day.year}-${String(day.month).padStart(2, "0")}-${String(day.day).padStart(2, "0")}`;
   // 手写的日期前后文（_datePrefix/_dateSuffix，见 parseDays）拼回，避免编辑时丢用户备注
@@ -1722,8 +1732,15 @@ var ImportantDaysView = class extends import_obsidian.ItemView {
       // 闰年 2/29 → 2/28 的约定与农历口径一并覆盖
       const nextBirthdayForAge = this.getNextBirthday(day);
       const ageInfo = this.getBirthdayAgeInfo(day, nextBirthdayForAge);
+      // 生日登记在将来（如预产期）：还没出生，不显示年龄和已出生天数——
+      // 否则卡片上是「即将1岁」「已出生 0 天」，而倒计时指向的其实是出生那天
+      const todayStart = new Date();
+      todayStart.setHours(0, 0, 0, 0);
+      const notBornYet = solarDate > todayStart;
       let ageText;
-      if (ageInfo) {
+      if (notBornYet) {
+        ageText = "";
+      } else if (ageInfo) {
         ageText = ageInfo.isToday ? `今日${ageInfo.completedAge}岁` : `即将${ageInfo.completedAge + 1}岁`;
       } else {
         // 下一次生日无效（超农历表范围等）：退回公历周年口径
@@ -1758,23 +1775,26 @@ var ImportantDaysView = class extends import_obsidian.ItemView {
         }
         mainEl.textContent = `${mainText} · 属${zodiac} · ${constellation}`;
         const subEl = dateRow.createDiv("id-card-date-sub");
-        subEl.textContent = `${solarDate.getFullYear()}年${solarDate.getMonth() + 1}月${solarDate.getDate()}日 ${weekDayOriginal} · ${ageText}`;
+        subEl.textContent = [`${solarDate.getFullYear()}年${solarDate.getMonth() + 1}月${solarDate.getDate()}日 ${weekDayOriginal}`, ageText]
+          .filter(Boolean).join(" · ");
       } else {
         const mainEl = dateRow.createDiv("id-card-date-main");
         let mainText = `${day.year}年${day.month}月${day.day}日`;
         if (isLeapBirthday) {
           mainText += "（闰年生日）";
         }
-        mainEl.textContent = `${mainText} ${weekDayOriginal} · ${ageText}`;
+        mainEl.textContent = [`${mainText} ${weekDayOriginal}`, ageText].filter(Boolean).join(" · ");
         if (lunarDate) {
           const subEl = dateRow.createDiv("id-card-date-sub");
           subEl.textContent = `农历${getLunarDateText(lunarDate)} · 属${zodiac} · ${constellation}`;
         }
       }
       
-      // 已出生天数（单独一行）
-      const daysRow = dateRow.createDiv("id-card-days");
-      daysRow.textContent = `已出生 ${daysPassed} 天`;
+      // 已出生天数（单独一行；尚未出生时不显示）
+      if (!notBornYet) {
+        const daysRow = dateRow.createDiv("id-card-days");
+        daysRow.textContent = `已出生 ${daysPassed} 天`;
+      }
       
       // 右侧倒计时
       const nextBirthday = this.getNextBirthday(day);
@@ -1863,9 +1883,11 @@ var ImportantDaysView = class extends import_obsidian.ItemView {
         infoRow.textContent = yearsText;
       }
       
-      // 已过天数和月数（单独一行）
-      const daysRow = dateRow.createDiv("id-card-days");
-      daysRow.textContent = `已相伴 ${daysPassed} 天（${monthsPassed}个月）`;
+      // 已过天数和月数（单独一行；起始日在将来时还没开始，不显示「已相伴 0 天」）
+      if (originalDate <= today) {
+        const daysRow = dateRow.createDiv("id-card-days");
+        daysRow.textContent = `已相伴 ${daysPassed} 天（${monthsPassed}个月）`;
+      }
       
       // 下一次具体日期
       const nextYear = today.getFullYear();
