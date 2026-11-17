@@ -1174,9 +1174,11 @@ function applyDaysUpdate(originalContent, currentDays, baseDays) {
     const body = result.replace(/^\uFEFF/, "");
     // 文件以 frontmatter（--- YAML 块）开头时标题必须插在其后，
     // 否则 YAML 被顶进正文、属性全部失效
-    // 不要加 m 标志且首行必须就是 ---：加了 m 后，文件中间的两个 `---` 水平线
-    // 会被当成 frontmatter 区间，拼接时丢掉前面的正文
-    const fm = body.match(/^(---[ \t]*\r?\n[\s\S]*?\r?\n---[ \t]*)/);
+    // 三条边界都不能省：不加 m（否则文件中间的两条 `---` 水平线会被当成
+    // frontmatter 区间，拼接丢正文）；闭合行的 `---` 后必须紧跟行尾/文件尾
+    // （否则 `---custom: v` 这类键会被当闭合行）；中间内容整体可选
+    // （否则 `---\n---` 空属性区匹配不上，标题插到属性区上面）
+    const fm = body.match(/^(---[ \t]*\r?\n(?:[\s\S]*?\r?\n)?---[ \t]*)(?=\r?\n|$)/);
     if (fm) {
       const after = body.slice(fm[1].length).replace(/^(\r?\n)+/, "");
       result = fm[1] + eol + `# 重要日子${eol}${eol}${after}`;
