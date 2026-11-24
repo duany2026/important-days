@@ -4,7 +4,7 @@
 
 安装：Obsidian 设置 → 第三方插件 → 浏览，搜「Important Days」→ 安装启用。手动安装 / BRAT 方式见[文末](#安装)。
 
-## English
+## Important Days
 
 Important Days tracks anniversaries, birthdays, and recurring events in one plain Markdown note inside your vault — countdowns, anniversary counts, ages, Chinese zodiac animals and signs, lunar/solar conversion. No network requests, no account, no telemetry.
 
