@@ -4,27 +4,14 @@
 
 安装：Obsidian 设置 → 第三方插件 → 浏览，搜「Important Days」→ 安装启用。手动安装 / BRAT 方式见[文末](#安装)。
 
-> **English speakers:** see the [English section](#english) below.
+## English
 
----
+Important Days tracks anniversaries, birthdays, and recurring events in one plain Markdown note inside your vault — countdowns, anniversary counts, ages, Chinese zodiac animals and signs, lunar/solar conversion. No network requests, no account, no telemetry.
 
-## 界面预览
-
-| 浅色主题 | 深色主题 |
-| --- | --- |
-| ![主视图（浅色主题）](docs/screenshots/plugin-main-view-light.png) | ![主视图（深色主题）](docs/screenshots/plugin-main-view-dark.png) |
-
-14 天内的事件倒计时高亮提醒：
-
-![14 天内事件高亮](docs/screenshots/highlight-within-14-days.png)
-
-数据就是库里的一个 Markdown 文件，按 `# 重要日子` 标题自动识别：
-
-![数据文件格式](docs/screenshots/data-file-format.png)
-
-![命令面板中的「重要日子」命令](docs/screenshots/command-palette.png)
-
-![插件设置页](docs/screenshots/plugin-settings.png)
+- **UI languages**: follows Obsidian's language — Simplified Chinese, Traditional Chinese, or English; anything else falls back to English. No separate setting.
+- **Data file**: headings and markers are read in all three languages (`## Anniversaries` / `## 纪念日`, `lunar` / `农历`, `weekly` / `每周`, …); a new note is written in your interface language (`Important Days.md` in English, `重要日子.md` in Chinese), entries added to an existing note keep that note's language, and switching language never rewrites or splits your file.
+- **Usage**: heart ribbon icon (or "Open view" command) → "+" to add; double-click (long-press on touch) to edit; events within 14 days are highlighted. Settings → "Card display" toggles zodiac, constellation, lunar date and leap-month marker (all on by default).
+- **Compatibility**: Obsidian `>= 0.15.0`, desktop and mobile. MIT license — see [LICENSE](./LICENSE).
 
 ---
 
@@ -115,17 +102,6 @@
 - Obsidian `>= 0.15.0`，桌面端与移动端均可用
 - 插件**完全不联网**：农历换算、属相与星座全部由随 `main.js` 分发的本地算法与数据表算出
 - 无账号要求，无付费功能，无遥测/统计，不上传任何用户数据；读写只发生在库内数据文件与插件自己的 `data.json` 设置
-
----
-
-## English
-
-Important Days tracks anniversaries, birthdays, and recurring events in one plain Markdown note inside your vault — countdowns, anniversary counts, ages, Chinese zodiac animals and signs, lunar/solar conversion. No network requests, no account, no telemetry.
-
-- **UI languages**: follows Obsidian's language — Simplified Chinese, Traditional Chinese, or English; anything else falls back to English. No separate setting.
-- **Data file**: headings and markers are read in all three languages (`## Anniversaries` / `## 纪念日`, `lunar` / `农历`, `weekly` / `每周`, …); a new note is written in your interface language (`Important Days.md` in English, `重要日子.md` in Chinese), entries added to an existing note keep that note's language, and switching language never rewrites or splits your file.
-- **Usage**: heart ribbon icon (or "Open view" command) → "+" to add; double-click (long-press on touch) to edit; events within 14 days are highlighted. Settings → "Card display" toggles zodiac, constellation, lunar date and leap-month marker (all on by default).
-- **Compatibility**: Obsidian `>= 0.15.0`, desktop and mobile. MIT license — see [LICENSE](./LICENSE).
 
 ---
 
