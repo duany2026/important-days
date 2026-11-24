@@ -12,7 +12,7 @@
 2. 解压，得到文件夹 `important-days`
 3. 打开你的 Obsidian 笔记库文件夹，进入隐藏目录 `.obsidian/plugins/`（如果没见过这个目录：在 Obsidian 里点左下角仓库图标 →「在系统资源管理器中显示仓库」，进去就能看到 `.obsidian`）
 4. 把解压出的 `important-days` 文件夹整个放进去，变成 `.obsidian/plugins/important-days/`（里面应有 `main.js`、`manifest.json`、`styles.css`）
-5. 重启 Obsidian → 设置 → 第三方插件 → 关闭「受限模式」（旧版叫「安全模式」）→ 在已安装插件列表中启用「Important Days」（社区插件浏览器、已安装列表、设置侧栏这三处显示 manifest 里的英文名；应用内视图标题、左侧心形图标提示与命令仍是中文「重要日子」）
+5. 重启 Obsidian → 设置 → 第三方插件 → 关闭「受限模式」（旧版叫「安全模式」）→ 在已安装插件列表中启用「Important Days」（社区插件浏览器、已安装列表、设置侧栏这三处显示 manifest 里的英文名；应用内界面跟随 Obsidian 的语言设置，中文界面下仍显示「重要日子」）
 
 > 进阶：也可以安装 [BRAT](https://github.com/TfTHacker/obsidian42-brat) 插件，添加仓库地址 `https://github.com/duany2026/important-days`，以后可自动更新。
 
@@ -29,7 +29,8 @@
 - **周期事件** — 每月 / 每季度 / 每年 / 每周的周期性提醒（日期超出当月天数时自动取当月最后一天）
 - **临近提醒** — 14 天内的事件倒计时高亮显示
 - **深色模式 / 响应式** — 自动适配 Obsidian 主题，适配手机与电脑
-- **自动扫描** — 自动查找包含「# 重要日子」标题的 Markdown 文件作为数据文件
+- **自动扫描** — 自动查找包含「# 重要日子」（或英文「# Important Days」）标题的 Markdown 文件作为数据文件
+- **简体 / 繁体 / English** — 界面语言跟随 Obsidian 设置，无需额外配置；其他语言显示英文
 
 ## 界面预览
 
@@ -93,6 +94,22 @@
 - 手改的内容、条目备注与自建小节都会被保留；外部改动与插件保存冲突时会拒绝写入并提示刷新
 - 文件是普通 Markdown，可以直接手工编辑，不必经过插件
 
+**多语言写法**：数据文件里的标题和标记有简体、繁体、英文三种写法，插件全都认得，可以混着用：
+
+| 用途 | 简体 | 繁体 | English |
+|---|---|---|---|
+| 文件标题 | `# 重要日子` | `# 重要日子` | `# Important Days` |
+| 纪念日小节 | `## 纪念日` | `## 紀念日` | `## Anniversaries` |
+| 生日小节 | `## 生日` | `## 生日` | `## Birthdays` |
+| 周期事件小节 | `## 周期事件` | `## 週期事件` | `## Recurring Events` |
+| 农历 / 闰月 | `农历` / `农历闰` | `農曆` / `農曆閏` | `lunar` / `lunar leap` |
+| 周期 | `每月` `每季度` `每年` `每周` | `每月` `每季` `每年` `每週` | `monthly` `quarterly` `yearly` `weekly` |
+| 默认文件名 | `重要日子.md` | `重要日子.md` | `Important Days.md` |
+
+- 第一次新建数据文件时，按当前界面语言的写法生成
+- 往已有文件里添加条目时，沿用这个文件原来的写法（中文文件里继续写中文，不会冒出英文）
+- 切换 Obsidian 界面语言后，原来的数据文件照常读写，不会被改写，也不会另起一个新文件
+
 ## 使用
 
 1. 点击左侧边栏的「心形」图标或运行命令「打开重要日子」打开视图
@@ -107,7 +124,7 @@
 | 设置 | 说明 |
 | --- | --- |
 | 文件路径 | 数据文件的库内路径（如 `笔记/重要日子.md`）。**失焦或回车才提交**，敲字过程中不会改配置；不以 `.md` 结尾会弹提示并保留原值。文件不存在时，添加日子会自动创建 |
-| 自动扫描 | 按「`# 重要日子`」这个一级标题在库里找数据文件，找到多个时用第一个并提示其余候选。扫描换了文件，上面的路径框会跟着更新 |
+| 自动扫描 | 按「`# 重要日子`」或「`# Important Days`」这个一级标题在库里找数据文件，找到多个时用第一个并提示其余候选。扫描换了文件，上面的路径框会跟着更新 |
 
 其余使用说明都在本文档里：编辑方式见「使用」，手编格式与冲突保护见「数据文件」，14 天内倒计时高亮见「功能特性」。
 
@@ -155,20 +172,20 @@ Entries are stored in a plain Markdown note in your vault:
 
 You can also install [BRAT](https://github.com/TfTHacker/obsidian42-brat) and add the repository `https://github.com/duany2026/important-days` to get updates automatically.
 
-The plugin is listed as "Important Days" in the community browser, the installed-plugin list, and the settings sidebar, because those three places render the `name` from `manifest.json`. The view title, the ribbon tooltip, and the command palette entry stay in Chinese ("重要日子").
+The plugin is listed as "Important Days" in the community browser, the installed-plugin list, and the settings sidebar, because those three places render the `name` from `manifest.json`. Inside the app, the interface follows Obsidian's language setting: Simplified Chinese, Traditional Chinese, or English. Any other language falls back to English.
 
 ### Usage
 
-1. Click the heart icon in the left ribbon, or run the command "打开重要日子" (Open Important Days).
+1. Click the heart icon in the left ribbon, or run the command "Important Days: Open view".
 2. Click "+" in the top-right corner to add a day: name, type (anniversary / birthday / recurring event), and date. For birthdays you can tick the lunar checkbox and, when it applies, the leap-month checkbox.
 3. Double-click a card on desktop, or long-press it on a touch device, to edit it. The edit dialog also deletes, behind a confirmation dialog.
-4. If the view says the data file is missing, open the plugin settings and click "重新扫描" (rescan), or create a Markdown note whose first-level heading is `# 重要日子`.
+4. If the view says the data file is missing, open the plugin settings and click "Rescan", or create a Markdown note whose first-level heading is `# Important Days` (or `# 重要日子`).
 
 Events falling within the next 14 days are highlighted, and the view refreshes itself when the date rolls over at midnight.
 
 ### Data file
 
-Every entry lives in one Markdown note. By default the plugin scans the vault for a note whose H1 is `# 重要日子`; you can also point it at a path manually in the settings.
+Every entry lives in one Markdown note. By default the plugin scans the vault for a note whose H1 is `# Important Days` or `# 重要日子`; you can also point it at a path manually in the settings.
 
 ```markdown
 # 重要日子
@@ -188,12 +205,34 @@ Every entry lives in one Markdown note. By default the plugin scans the vault fo
 - 例会 | 每周 5
 ```
 
-The headings and the lunar markers are Chinese because the parser matches them literally. Entry names can be in any language.
+The headings and markers can be written in English, Simplified Chinese, or Traditional Chinese, and the plugin reads all three. Entry names can be in any language. The same file in English:
 
-- The `##` heading selects the type: `纪念日` (anniversary), `生日` (birthday), `周期事件` (recurring event).
+```markdown
+# Important Days
+
+## Anniversaries
+- Wedding | 2023-05-20
+
+## Birthdays
+- Mom | 1965-08-15
+- Grandma | 1940-12-08 | lunar
+- Leap-month birthday | 1984-10-05 | lunar leap
+
+## Recurring Events
+- Rent | monthly 15
+- Quarterly review | quarterly 3-15
+- Car inspection | yearly 05-20
+- Team meeting | weekly 5
+```
+
+- A new data note is written in the current interface language (`Important Days.md` in English, `重要日子.md` in Chinese).
+- When you add entries to an existing note, the plugin keeps using the style that note already uses, so one file never mixes languages.
+- Switching Obsidian's language does not rewrite your note or start a new one; the old note keeps working.
+
+- The `##` heading selects the type: `Anniversaries` / `纪念日` / `紀念日`, `Birthdays` / `生日`, `Recurring Events` / `周期事件` / `週期事件`.
 - Dates are `YYYY-M-D`; leading zeros are optional.
-- A third column of `农历` on a birthday means the date is lunar; `农历闰` means a leap-month birthday. If that lunar year has no such leap month, the regular month is used instead.
-- Recurring formats: `每月 N` (monthly), `每季度 M-D` (quarterly, where M is 1-3), `每年 MM-DD` (yearly), `每周 N` (weekly, where N is 1-7, Monday to Sunday). A day number beyond the month's length is clamped to the last day.
+- A third column of `lunar` (`农历` / `農曆`) on a birthday means the date is lunar; `lunar leap` (`农历闰` / `農曆閏`) means a leap-month birthday. If that lunar year has no such leap month, the regular month is used instead.
+- Recurring formats: `monthly N` (`每月 N`), `quarterly M-D` (`每季度` / `每季`, where M is 1-3), `yearly MM-DD` (`每年`), `weekly N` (`每周` / `每週`, where N is 1-7, Monday to Sunday). A day number beyond the month's length is clamped to the last day.
 - Anniversaries are always treated as solar dates, even when a lunar marker is present.
 - The note is ordinary Markdown and can be edited by hand. Your own sections, trailing remarks, and non-standard spacing are preserved. If the file changed on disk while the plugin was editing, the write is refused and you are asked to refresh, so nothing is silently overwritten.
 
@@ -201,8 +240,8 @@ The headings and the lunar markers are Chinese because the parser matches them l
 
 | Setting | Description |
 | --- | --- |
-| 文件路径 (File path) | Vault-relative path to the data note, e.g. `笔记/重要日子.md`. Committed on blur or Enter, not on every keystroke. A value that does not end in `.md` is rejected with a notice and the previous value is kept. The note is created automatically when you add a day. |
-| 自动扫描 (Auto scan) | Finds the data note by its `# 重要日子` H1. When several notes match, the first is used and the others are reported. The path field updates to whatever the scan picked. |
+| File path (文件路径) | Vault-relative path to the data note, e.g. `Notes/Important Days.md`. Committed on blur or Enter, not on every keystroke. A value that does not end in `.md` is rejected with a notice and the previous value is kept. The note is created automatically when you add a day. |
+| Auto scan (自动扫描) | Finds the data note by its `# Important Days` or `# 重要日子` H1. When several notes match, the first is used and the others are reported. The path field updates to whatever the scan picked. |
 
 ### Privacy and network use
 
@@ -224,6 +263,16 @@ MIT — see [LICENSE](./LICENSE). Author: duany.
 ---
 
 ## 版本记录
+
+### 1.5.0（2026-11-25）
+
+新增繁体中文和英文界面。**简体中文用户的界面文字、数据文件和操作方式都没有变化**。
+
+- 新增：界面语言跟随 Obsidian 的语言设置，支持简体中文、繁体中文、English；其他语言显示英文。不用额外设置
+- 新增：数据文件里的标题和标记（如「## 纪念日」「农历」「每周」）也认繁体和英文写法（如「## 紀念日」「農曆」「每週」，「## Anniversaries」「lunar」「weekly」），三种写法可以混用
+- 新增：第一次新建数据文件时按界面语言生成（英文界面下文件名是 `Important Days.md`）；往已有文件里添加条目时沿用这个文件原来的写法，同一个文件不会中英混杂
+- 调整：电脑上卡片恢复成一排一张，和手机一致（1.4.x 在宽窗口里会排成多列）
+- 保证：切换 Obsidian 界面语言后，原来的数据文件照常读写，不会被改写，也不会另起一个新文件把数据分成两份；手动指定过的数据文件路径保持不变
 
 ### 1.4.5（2026-11-18）
 

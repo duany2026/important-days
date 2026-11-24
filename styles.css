@@ -164,12 +164,9 @@
 
 .id-cards-container {
   display: grid;
-  /* 原来是 display:grid 却没有 grid-template-columns，等于单列，卡片全竖着堆，
-     内容一高就触发下面那条 overflow-y:auto —— 这是右侧滚动条的根因。
-     改成按可用宽度自动分列：宽 pane 多列铺满，窄侧栏/手机自然退回一列。
-     auto-fill 量的是容器宽度而不是视口，所以桌面右侧栏也能正确退化，
-     不受 @media (max-width:768px) 那类视口断点影响。 */
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  /* 有意单列：桌面端也一排只放一张卡片，和手机一致（恢复最初效果）。
+     不要改回 auto-fill 多列。 */
+  grid-template-columns: 1fr;
   /* 卡片少时别把行拉伸填满整屏高度，否则几张卡片会被撑成几大块 */
   align-content: start;
   gap: 16px;
@@ -254,6 +251,11 @@
   text-align: center;
   min-width: 70px;
   flex-shrink: 0;
+}
+
+/* 倒计时为「今」以外的整词（如英文 Today）时缩小字号，避免撑宽右侧区域 */
+.id-card-countdown-main.id-card-countdown-word {
+  font-size: 18px;
 }
 
 /* ==================== 卡片头部 ==================== */

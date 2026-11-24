@@ -1,7 +1,7 @@
 {
 	"id": "important-days",
 	"name": "Important Days",
-	"version": "1.4.5",
+	"version": "1.5.0",
 	"minAppVersion": "0.15.0",
 	"description": "Count down to anniversaries, birthdays, and recurring events, with Chinese lunar dates, zodiac signs, and Chinese zodiac animals, all stored in a plain Markdown note.",
 	"author": "duany",
