@@ -256,6 +256,11 @@
   flex-shrink: 0;
 }
 
+/* 倒计时为「今」以外的整词（如英文 Today）时缩小字号，避免撑宽右侧区域 */
+.id-card-countdown-main.id-card-countdown-word {
+  font-size: 18px;
+}
+
 /* ==================== 卡片头部 ==================== */
 
 /* 基样式需为 flex，480px 断点的 flex-direction: row 才会生效 */
