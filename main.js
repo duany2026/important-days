@@ -516,6 +516,12 @@ function isDataH1Text(text) {
   const t = String(text || "").trim();
   return t === "重要日子" || t.toLowerCase() === "important days";
 }
+/** 全文里（代码块外）是否有数据文件 H1 */
+function contentHasDataH1(content) {
+  const lines = String(content || "").replace(/^\uFEFF/, "").split("\n");
+  const fenced = fenceMask(lines);
+  return lines.some((l, i) => !fenced[i] && isDataH1Line(l.trim()));
+}
 /** 已 trim 的一行是否为数据文件 H1（`# 重要日子` / `# Important Days`，# 后空格可省） */
 function isDataH1Line(trimmed) {
   const m = /^#(?!#)\s*(.*)$/.exec(trimmed);
@@ -3338,17 +3344,7 @@ async function scanForDataFiles(app) {
       // 缓存未就绪（新建/未索引）：回退读全文精确匹配 H1 行（容掉个别编辑器写入的 BOM）。
       // 与 metadataCache 的 headings 口径一致：代码块内的 H1 不算标题（逐行 trim 后匹配，
       // trim 会剥掉 BOM 与 CRLF 的 \r）
-      const content = (await app.vault.cachedRead(file)).replace(/^\uFEFF/, "");
-      const scanLines = content.split("\n");
-      const scanFence = fenceMask(scanLines);
-      let h1Found = false;
-      for (let i = 0; i < scanLines.length; i++) {
-        if (!scanFence[i] && isDataH1Line(scanLines[i].trim())) {
-          h1Found = true;
-          break;
-        }
-      }
-      if (h1Found) {
+      if (contentHasDataH1(await app.vault.cachedRead(file))) {
         hits.push(file.path);
       }
     } catch {
@@ -3374,10 +3370,18 @@ var ImportantDaysPlugin = class extends import_obsidian2.Plugin {
     // 仅在用户未手动设置 dataFile 时才自动扫描，避免覆盖用户配置。
     // 先给默认路径让插件立即可用，扫描延迟到 onload 之后执行，避免大库首启阻塞
     if (!this.settings.dataFile) {
-      // 默认文件名随界面语言（重要日子.md / Important Days.md）；库里已有任一语言的默认文件则沿用它，
-      // 切换界面语言不会另起一个新文件把数据分裂开
-      const existingDefault = ["重要日子.md", "Important Days.md"]
-        .find((p) => this.app.vault.getAbstractFileByPath(p) instanceof import_obsidian2.TFile);
+      // 默认文件名随界面语言（重要日子.md / Important Days.md）；库里已有任一语言的默认数据文件
+      //（带数据 H1）则沿用它，切换界面语言不会另起一个新文件把数据分裂开；同名的无关笔记不认
+      let existingDefault = null;
+      for (const p of ["重要日子.md", "Important Days.md"]) {
+        const f = this.app.vault.getAbstractFileByPath(p);
+        if (!(f instanceof import_obsidian2.TFile)) continue;
+        try {
+          if (contentHasDataH1(await this.app.vault.cachedRead(f))) { existingDefault = p; break; }
+        } catch {
+          // 读不了就不认
+        }
+      }
       this.settings.dataFile = existingDefault || dataFormat(I18N_LANG).file;
       await this.saveSettings();
       // 等布局就绪再扫：冷启动时 metadataCache 未建好，立即扫会漏掉
