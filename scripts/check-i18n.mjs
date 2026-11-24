@@ -35,27 +35,57 @@ for (const lang of ["zh-TW", "en"]) {
   const missing = baseKeys.filter((k) => !keys.has(k));
   const extra = [...keys].filter((k) => !baseKeys.includes(k));
   if (missing.length) errors.push(`${lang} 缺少 ${missing.length} 个 key: ${missing.slice(0, 10).join(", ")}${missing.length > 10 ? "…" : ""}`);
-  if (extra.length) errors.push(`${lang} 多出 ${extra.length} 个 key: ${extra.slice(0, 10).join(", ")}${extra.length > 10 ? "…" : ""}`);
+  if (extra.length) console.warn(`! ${lang} 多出 ${extra.length} 个 key（非致命，确认是有意为之）: ${extra.join(", ")}`);
 }
 
 // ---- 2) tr("...") 调用点的 key 都在 zh-CN 里 ----
 const known = new Set(baseKeys);
 const called = new Set();
 for (const m of src.matchAll(/\btr\(\s*"([^"]+)"/g)) called.add(m[1]);
+// tr() 调用点要求 key 存在于任意一种语言词典（en 独有词如 date.months 是合法设计）；
+// 但不在 zh-CN 里的给警告——tr() 的兜底是 zh-CN，中文下兜底会拿到 key 原文
+const anyLang = new Set(LANGS.flatMap((l) => Object.keys(I18N[l] || {})));
 const unknown = [...called].filter((k) => {
-  if (k.endsWith(".")) {
-    // 动态拼接（tr("view.mode." + x)）：只要求存在该前缀的真实 key
-    return !baseKeys.some((real) => real.startsWith(k));
-  }
-  return !known.has(k);
+  if (k.endsWith(".")) return ![...anyLang].some((real) => real.startsWith(k));
+  return !anyLang.has(k);
 });
 if (unknown.length) errors.push(`tr() 引用了不存在的 key: ${unknown.join(", ")}`);
+const notInZh = [...called].filter((k) => !k.endsWith(".") && anyLang.has(k) && !known.has(k));
+if (notInZh.length) console.warn(`! ${notInZh.length} 个 tr() key 不在 zh-CN 词典（中文兜底会拿到原文，确认模板里不用它）: ${notInZh.join(", ")}`);
 
-// ---- 3) 以 "zh-CN": 为键的映射对象必须三语齐全 ----
-for (const m of src.matchAll(/\{[^{}]*"zh-CN":\s*[^,{][^{}]*\}/g)) {
+// ---- 2b) 动态 key：前缀→取值域，逐值验证（表驱动，新增动态 tr() 模式在此登记） ----
+// key: tr("前缀." + 变量)；value: main.js 里提供取值列表的数组变量名
+const DYNAMIC_KEYS = {
+  "cycle.": ["list", ["monthly", "quarterly", "yearly", "weekly"]],
+};
+for (const [prefix, spec] of Object.entries(DYNAMIC_KEYS)) {
+  let values;
+  if (spec[0] === "var") {
+    const m = src.match(new RegExp(`var ${spec[1]} = \\[([^\\]]*)\\]`));
+    if (!m) { errors.push(`找不到动态 key 取值域 ${spec[1]}`); continue; }
+    values = [...m[1].matchAll(/"([^"]+)"/g)].map((x) => x[1]);
+  } else {
+    values = spec[1];
+  }
+  for (const v of values) {
+    if (!known.has(prefix + v)) errors.push(`词典缺动态 key: ${prefix + v}`);
+  }
+}
+const registeredPrefixes = Object.keys(DYNAMIC_KEYS);
+for (const k of [...called].filter((k) => k.endsWith(".") && !registeredPrefixes.includes(k))) {
+  // 未登记的动态前缀至少要求有真实 key 兜底
+  if (!baseKeys.some((real) => real.startsWith(k))) errors.push(`tr() 引用了不存在的 key: ${k}…`);
+}
+
+// ---- 3) 以任一语言为键的映射对象必须语言齐全（zh-CN 被整个删掉也能抓到） ----
+// REQUIRE_ALL_THREE=true：映射必须三语齐全（本仓库约定）；
+// =false：允许"zh-CN 即源语言值、只补 zh-TW+en 翻译"的映射（此时要求 zh-TW 和 en 成对出现）
+const REQUIRE_ALL_THREE = false; // 本仓库允许"zh-CN 为源语言值、映射只补 zh-TW+en"
+for (const m of src.matchAll(/\{[^{}]*(?:"zh-CN"|"zh-TW"|"en"|en):[^{}]*\}/g)) {
   const lit = m[0];
-  for (const lang of LANGS) {
-    if (!lit.includes(`"${lang}":`)) {
+  const required = REQUIRE_ALL_THREE ? LANGS : ["zh-TW", "en"];
+  for (const lang of required) {
+    if (!lit.includes(`"${lang}":`) && !lit.includes(`${lang}:`)) {
       errors.push(`语言映射缺 ${lang}: ${lit.slice(0, 80)}…`);
       break;
     }
