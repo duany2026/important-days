@@ -1566,7 +1566,8 @@ function applyDaysUpdate(originalContent, currentDays, baseDays) {
   // 判重排除已标记删除的行——删除行上的位置可以被同名新行接替
   const remainingLineTexts = new Set();
   for (let i = 0; i < lines.length; i++) {
-    if (action[i] === "delete") continue;
+    // 代码块里的示例行不是条目，不能用来判重（否则与示例同文的新行被跳过，条目凭空消失）
+    if (action[i] === "delete" || fencedLine[i]) continue;
     const t = lines[i].trim();
     if (t.startsWith("- ")) remainingLineTexts.add(t);
   }
