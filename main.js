@@ -3377,7 +3377,9 @@ var ImportantDaysPlugin = class extends import_obsidian2.Plugin {
         const f = this.app.vault.getAbstractFileByPath(p);
         if (!(f instanceof import_obsidian2.TFile)) continue;
         try {
-          if (contentHasDataH1(await this.app.vault.cachedRead(f))) { existingDefault = p; break; }
+          // 带数据 H1，或虽无 H1 但已有可识别条目（老版本手写的文件），都算数据文件
+          const c = await this.app.vault.cachedRead(f);
+          if (contentHasDataH1(c) || parseDays(c).length > 0) { existingDefault = p; break; }
         } catch {
           // 读不了就不认
         }
