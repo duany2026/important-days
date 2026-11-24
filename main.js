@@ -422,12 +422,17 @@ function resolveLanguage(code) {
  * 读 Obsidian 界面语言写入 I18N_LANG。
  * getLanguage 自 Obsidian 1.8.7 才有（minAppVersion 是 0.15.0），老版本退回系统语言
  */
+// getLanguage() 是 Obsidian 1.8.7+ 才有；本插件 minAppVersion 更低，缺失时退回 Obsidian 自带 moment 的 locale（随界面语言设置）
+function momentLocale() {
+  const m = typeof window !== "undefined" ? window.moment : null;
+  return m && typeof m.locale === "function" ? m.locale() : "en";
+}
 function applyLanguage() {
   let code;
   try {
-    code = typeof import_obsidian2.getLanguage === "function" ? import_obsidian2.getLanguage() : (navigator.language || "en");
+    code = typeof import_obsidian2.getLanguage === "function" ? import_obsidian2.getLanguage() : momentLocale();
   } catch {
-    code = navigator.language || "en";
+    code = momentLocale();
   }
   I18N_LANG = resolveLanguage(code);
   return I18N_LANG;
