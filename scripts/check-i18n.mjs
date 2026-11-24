@@ -57,6 +57,7 @@ if (notInZh.length) console.warn(`! ${notInZh.length} 个 tr() key 不在 zh-CN 
 // key: tr("前缀." + 变量)；value: main.js 里提供取值列表的数组变量名
 const DYNAMIC_KEYS = {
   "cycle.": ["list", ["monthly", "quarterly", "yearly", "weekly"]],
+  "settings.show.": ["list", ["zodiac", "constellation", "lunar", "leapTag"]],
 };
 for (const [prefix, spec] of Object.entries(DYNAMIC_KEYS)) {
   let values;

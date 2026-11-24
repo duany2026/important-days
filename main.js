@@ -180,6 +180,11 @@ var I18N = {
     "type.birthday": "生日",
     "type.cycle": "周期事件",
     "settings.section": "数据文件",
+    "settings.display.section": "卡片显示",
+    "settings.show.zodiac": "显示属相",
+    "settings.show.constellation": "显示星座",
+    "settings.show.lunar": "显示农历日期（公历生日的副行）",
+    "settings.show.leapTag": "显示闰月/闰年标注",
     "settings.current": "当前：{path}",
     "settings.notFound": "未找到数据文件。点「重新扫描」自动查找；在视图里点「+」添加日子时也会自动创建",
     "settings.path.name": "文件路径",
@@ -274,6 +279,11 @@ var I18N = {
     "type.birthday": "生日",
     "type.cycle": "週期事件",
     "settings.section": "資料檔",
+    "settings.display.section": "卡片顯示",
+    "settings.show.zodiac": "顯示屬相",
+    "settings.show.constellation": "顯示星座",
+    "settings.show.lunar": "顯示農曆日期（國曆生日的副行）",
+    "settings.show.leapTag": "顯示閏月/閏年標註",
     "settings.current": "目前：{path}",
     "settings.notFound": "未找到資料檔。點「重新掃描」自動尋找；在視圖裡點「+」新增日子時也會自動建立",
     "settings.path.name": "檔案路徑",
@@ -368,6 +378,11 @@ var I18N = {
     "type.birthday": "Birthday",
     "type.cycle": "Recurring event",
     "settings.section": "Data file",
+    "settings.display.section": "Card display",
+    "settings.show.zodiac": "Show zodiac",
+    "settings.show.constellation": "Show star sign",
+    "settings.show.lunar": "Show lunar date (secondary line on solar birthdays)",
+    "settings.show.leapTag": "Show leap-month / leap-day tags",
     "settings.current": "Current: {path}",
     "settings.notFound": "No data file found. Click \"Rescan\" to look for one; it is also created automatically when you add a day with \"+\" in the view.",
     "settings.path.name": "File path",
@@ -2255,23 +2270,30 @@ var ImportantDaysView = class extends import_obsidian.ItemView {
         const mainEl = dateRow.createDiv("id-card-date-main");
         const lunarFallback = I18N_LANG === "en" ? `${day.month}/${day.day}` : day.month + "月" + day.day + "日";
         let mainText = tr("card.lunarMain", { text: lunarText || lunarFallback });
-        if (hasRealLeapMonth) {
+        if (hasRealLeapMonth && this.plugin.settings.display.leapTag) {
           mainText += tr("card.leapMonthTag");
         }
-        mainEl.textContent = `${mainText} · ${tr("card.zodiac", { z: zodiac })} · ${constellation}`;
+        const mainParts = [mainText];
+        if (this.plugin.settings.display.zodiac) mainParts.push(tr("card.zodiac", { z: zodiac }));
+        if (this.plugin.settings.display.constellation) mainParts.push(constellation);
+        mainEl.textContent = mainParts.join(" · ");
         const subEl = dateRow.createDiv("id-card-date-sub");
         subEl.textContent = [`${fmtYMD(solarDate.getFullYear(), solarDate.getMonth() + 1, solarDate.getDate())} ${weekDayOriginal}`, ageText]
           .filter(Boolean).join(" · ");
       } else {
         const mainEl = dateRow.createDiv("id-card-date-main");
         let mainText = fmtYMD(day.year, day.month, day.day);
-        if (isLeapBirthday) {
+        if (isLeapBirthday && this.plugin.settings.display.leapTag) {
           mainText += tr("card.leapDayTag");
         }
         mainEl.textContent = [`${mainText} ${weekDayOriginal}`, ageText].filter(Boolean).join(" · ");
-        if (lunarDate) {
+        const subParts = [];
+        if (lunarDate && this.plugin.settings.display.lunar) subParts.push(tr("card.lunarSub", { text: getLunarDateText(lunarDate) }));
+        if (this.plugin.settings.display.zodiac) subParts.push(tr("card.zodiac", { z: zodiac }));
+        if (this.plugin.settings.display.constellation) subParts.push(constellation);
+        if (subParts.length) {
           const subEl = dateRow.createDiv("id-card-date-sub");
-          subEl.textContent = `${tr("card.lunarSub", { text: getLunarDateText(lunarDate) })} · ${tr("card.zodiac", { z: zodiac })} · ${constellation}`;
+          subEl.textContent = subParts.join(" · ");
         }
       }
       
@@ -3316,13 +3338,31 @@ var ImportantDaysSettingTab = class extends import_obsidian2.PluginSettingTab {
       });
     paintScanRow();
 
+    // 卡片显示开关：默认全开，关掉只影响渲染、不动数据文件
+    const displayEl = settingsSection(containerEl, tr("settings.display.section"));
+    const displayKeys = ["zodiac", "constellation", "lunar", "leapTag"];
+    for (const key of displayKeys) {
+      new import_obsidian2.Setting(displayEl)
+        .setName(tr("settings.show." + key))
+        .addToggle((toggle) => {
+          toggle.setValue(plugin.settings.display[key]);
+          toggle.onChange(async (value) => {
+            plugin.settings.display[key] = value;
+            await plugin.saveSettings();
+            plugin.refreshView();
+          });
+        });
+    }
+
     // 使用提示那四条已移到 README（编辑方式、手编格式、冲突保护、14 天高亮）：
     // 设置页只留设置，手机端打开不必先划一整屏才看到输入框
   }
 };
 
 var DEFAULT_SETTINGS = {
-  dataFile: ""
+  dataFile: "",
+  // 卡片显示开关：默认全开；关掉只影响渲染，不改数据文件里的内容
+  display: { zodiac: true, constellation: true, lunar: true, leapTag: true }
 };
 
 /**
@@ -3495,8 +3535,14 @@ var ImportantDaysPlugin = class extends import_obsidian2.Plugin {
   async loadSettings() {
     const raw = await this.loadData();
     // 白名单取字段：旧版废弃键（如 autoScanned）不再被合并回配置反复写盘
+    const rawDisplay = raw && typeof raw.display === "object" && raw.display !== null ? raw.display : {};
+    const display = {};
+    for (const k of Object.keys(DEFAULT_SETTINGS.display)) {
+      display[k] = typeof rawDisplay[k] === "boolean" ? rawDisplay[k] : DEFAULT_SETTINGS.display[k];
+    }
     this.settings = {
-      dataFile: raw && typeof raw.dataFile === "string" ? raw.dataFile : DEFAULT_SETTINGS.dataFile
+      dataFile: raw && typeof raw.dataFile === "string" ? raw.dataFile : DEFAULT_SETTINGS.dataFile,
+      display
     };
   }
 
