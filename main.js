@@ -2888,11 +2888,12 @@ var ImportantDaysView = class extends import_obsidian.ItemView {
 
       // 直接通过闭包引用回填，无需 setTimeout 和 getElementById
       if (editDay.cycleType === "monthly") {
-        if (cycleValueInput) cycleValueInput.value = editDay.cycleValue;
+        if (cycleValueInput) cycleValueInput.value = String(parseInt(editDay.cycleValue));
       } else if (editDay.cycleType === "quarterly" || editDay.cycleType === "yearly") {
         const parts = editDay.cycleValue.split("-");
-        if (cycleMonthInput && parts[0]) cycleMonthInput.value = parts[0];
-        if (cycleDayInput && parts[1]) cycleDayInput.value = parts[1];
+        // 手写的补零值（如「每年 05-20」）要去零才能对上下拉项的 value（"5"），否则回填为空、保存写出「-20」
+        if (cycleMonthInput && parts[0]) cycleMonthInput.value = String(parseInt(parts[0]));
+        if (cycleDayInput && parts[1]) cycleDayInput.value = String(parseInt(parts[1]));
         // yearly 的日选项按月份动态生成：月份回填后触发重建，使日选项与所选月份匹配
         //（重建会保留当前已选日并按该月上限钳制）
         if (editDay.cycleType === "yearly" && cycleMonthInput) {
