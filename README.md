@@ -1,36 +1,12 @@
 # 重要日子 (Important Days)
 
-## 下载安装（小白版）
+记录生活中的重要日子：纪念日、生日、周期事件。支持倒计时、农历公历互转、属相星座显示，适配桌面端和移动端。数据就是你自己库里的一个 Markdown 笔记，插件完全不联网。
 
-**最省事的一条路：直接在 Obsidian 里装。** 设置 → 第三方插件 → 浏览，搜索「Important Days」→ 安装 → 启用。插件进入官方社区目录后，之后的更新也在这个页面点一下就能拿到。
+安装：Obsidian 设置 → 第三方插件 → 浏览，搜「Important Days」→ 安装启用。手动安装 / BRAT 方式见[文末](#安装)。
 
-> 从社区目录安装时，客户端只逐个下载 Release 里的 `main.js`、`manifest.json`、`styles.css` 三份文件。这个插件完全不联网，也没有需要另行下载的数据文件——数据就是你自己库里的一个 Markdown 笔记。
+> **English speakers:** see the [English section](#english) below.
 
-**想手动装**（比如所在网络打不开社区插件浏览器）：
-
-1. 打开本仓库的 [Releases 页面](https://github.com/duany2026/important-days/releases)，下载最新版本里的 `important-days-<版本号>.zip`
-2. 解压，得到文件夹 `important-days`
-3. 打开你的 Obsidian 笔记库文件夹，进入隐藏目录 `.obsidian/plugins/`（如果没见过这个目录：在 Obsidian 里点左下角仓库图标 →「在系统资源管理器中显示仓库」，进去就能看到 `.obsidian`）
-4. 把解压出的 `important-days` 文件夹整个放进去，变成 `.obsidian/plugins/important-days/`（里面应有 `main.js`、`manifest.json`、`styles.css`）
-5. 重启 Obsidian → 设置 → 第三方插件 → 关闭「受限模式」（旧版叫「安全模式」）→ 在已安装插件列表中启用「Important Days」（社区插件浏览器、已安装列表、设置侧栏这三处显示 manifest 里的英文名；应用内界面跟随 Obsidian 的语言设置，中文界面下仍显示「重要日子」）
-
-> 进阶：也可以安装 [BRAT](https://github.com/TfTHacker/obsidian42-brat) 插件，添加仓库地址 `https://github.com/duany2026/important-days`，以后可自动更新。
-
-
-记录生活中的重要日子：纪念日、生日、周期事件。支持倒计时、农历公历互转、属相星座显示，适配桌面端和移动端。
-
-> **English speakers:** see the [English section](#english) below for installation, usage, the data file format, and privacy details.
-
-## 功能特性
-
-- **纪念日** — 显示下一次纪念日的倒计时天数、周年数、已相伴天数/月数
-- **生日** — 显示年龄、农历公历互转、属相、星座、已出生天数
-- **农历支持** — 支持农历日期输入与显示，含闰月生日（当年无闰月时自动按普通月处理）
-- **周期事件** — 每月 / 每季度 / 每年 / 每周的周期性提醒（日期超出当月天数时自动取当月最后一天）
-- **临近提醒** — 14 天内的事件倒计时高亮显示
-- **深色模式 / 响应式** — 自动适配 Obsidian 主题，适配手机与电脑
-- **自动扫描** — 自动查找包含「# 重要日子」（或英文「# Important Days」）标题的 Markdown 文件作为数据文件
-- **简体 / 繁体 / English** — 界面语言跟随 Obsidian 设置，无需额外配置；其他语言显示英文
+---
 
 ## 界面预览
 
@@ -50,18 +26,30 @@
 
 ![插件设置页](docs/screenshots/plugin-settings.png)
 
-## 安装
+---
 
-### 社区插件市场（推荐）
+## 功能特性
 
-设置 → 第三方插件 → 浏览，搜索「Important Days」，安装后启用。更新也在同一页点一下即可。
+- **纪念日** — 显示下一次纪念日的倒计时天数、周年数、已相伴天数/月数
+- **生日** — 显示年龄、农历公历互转、属相、星座、已出生天数
+- **农历支持** — 支持农历日期输入与显示，含闰月生日（当年无闰月时自动按普通月处理）
+- **周期事件** — 每月 / 每季度 / 每年 / 每周的周期性提醒（日期超出当月天数时自动取当月最后一天）
+- **临近提醒** — 14 天内的事件倒计时高亮显示
+- **卡片显示开关** — 属相、星座、农历日期、闰月标注可各自关闭，默认全开
+- **深色模式 / 响应式** — 自动适配 Obsidian 主题，适配手机与电脑
+- **自动扫描** — 自动查找包含「# 重要日子」（或英文「# Important Days」）标题的 Markdown 文件作为数据文件
+- **简体 / 繁体 / English** — 界面语言跟随 Obsidian 设置，无需额外配置；其他语言显示英文
 
-### 本地安装
+---
 
-1. 将 `important-days` 文件夹复制到 vault 的 `.obsidian/plugins/` 目录
-2. 在 Obsidian 设置 → 第三方插件中启用「Important Days」
+## 使用方法
 
-### 数据文件
+1. 点击左侧边栏的「心形」图标或运行命令「打开重要日子」打开视图
+2. 点击右上角「+」添加日子（名称、类型、日期；生日可勾选农历/闰月）
+3. **电脑端双击卡片**、**手机端长按卡片**编辑；编辑弹窗中可删除
+4. 若数据文件路径提示不存在，在插件设置中点击「重新扫描」或新建包含「# 重要日子」标题的 Markdown 文件
+
+## 数据文件
 
 插件数据保存在一个 Markdown 文件中（默认自动扫描，也可在插件设置中手动指定/重新扫描）：
 
@@ -110,155 +98,50 @@
 - 往已有文件里添加条目时，沿用这个文件原来的写法（中文文件里继续写中文，不会冒出英文）
 - 切换 Obsidian 界面语言后，原来的数据文件照常读写，不会被改写，也不会另起一个新文件
 
-## 使用
-
-1. 点击左侧边栏的「心形」图标或运行命令「打开重要日子」打开视图
-2. 点击右上角「+」添加日子（名称、类型、日期；生日可勾选农历/闰月）
-3. **电脑端双击卡片**、**手机端长按卡片**编辑；编辑弹窗中可删除
-4. 若数据文件路径提示不存在，在插件设置中点击「重新扫描」或新建包含「# 重要日子」标题的 Markdown 文件
-
 ## 设置项
 
-设置页只有一个「数据文件」分区，两行：
+设置页分「数据文件」「卡片显示」两区：
 
 | 设置 | 说明 |
 | --- | --- |
 | 文件路径 | 数据文件的库内路径（如 `笔记/重要日子.md`）。**失焦或回车才提交**，敲字过程中不会改配置；不以 `.md` 结尾会弹提示并保留原值。文件不存在时，添加日子会自动创建 |
 | 自动扫描 | 按「`# 重要日子`」或「`# Important Days`」这个一级标题在库里找数据文件，找到多个时用第一个并提示其余候选。扫描换了文件，上面的路径框会跟着更新 |
+| 显示属相 / 星座 / 农历日期 / 闰月标注 | 卡片上这四段信息各自的显示开关，默认全开；只影响界面显示，不改数据文件 |
 
-其余使用说明都在本文档里：编辑方式见「使用」，手编格式与冲突保护见「数据文件」，14 天内倒计时高亮见「功能特性」。
+其余使用说明都在本文档里：编辑方式见「使用方法」，手编格式与冲突保护见「数据文件」，14 天内倒计时高亮见「功能特性」。
 
-## 兼容性
+## 兼容性与隐私
 
-- Obsidian `>= 0.15.0`
-- 桌面端与移动端（非桌面专用）
-
-## 网络与隐私
-
-插件**完全不联网**：源码里没有任何网络请求，农历换算、属相与星座全部由随 `main.js` 分发的本地算法与数据表算出。
-
-- 无账号要求，无付费功能，无遥测/统计，不上传任何用户数据
-- 不访问笔记库以外的文件；读写只发生在你的库内（那一个 Markdown 数据文件）与插件自己的目录（`data.json` 设置）
-- 断网时功能不受任何影响
+- Obsidian `>= 0.15.0`，桌面端与移动端均可用
+- 插件**完全不联网**：农历换算、属相与星座全部由随 `main.js` 分发的本地算法与数据表算出
+- 无账号要求，无付费功能，无遥测/统计，不上传任何用户数据；读写只发生在库内数据文件与插件自己的 `data.json` 设置
 
 ---
 
 ## English
 
-### Overview
+Important Days tracks anniversaries, birthdays, and recurring events in one plain Markdown note inside your vault — countdowns, anniversary counts, ages, Chinese zodiac animals and signs, lunar/solar conversion. No network requests, no account, no telemetry.
 
-Important Days tracks anniversaries, birthdays, and recurring events in a single plain Markdown note inside your vault. It shows countdowns, anniversary counts, ages, Chinese zodiac animals, and zodiac signs, and converts between Chinese lunar and solar dates. The interface follows Obsidian's theme (light and dark) and works on desktop, phones, and tablets.
+- **UI languages**: follows Obsidian's language — Simplified Chinese, Traditional Chinese, or English; anything else falls back to English. No separate setting.
+- **Data file**: headings and markers are read in all three languages (`## Anniversaries` / `## 纪念日`, `lunar` / `农历`, `weekly` / `每周`, …); a new note is written in your interface language (`Important Days.md` in English, `重要日子.md` in Chinese), entries added to an existing note keep that note's language, and switching language never rewrites or splits your file.
+- **Usage**: heart ribbon icon (or "Open view" command) → "+" to add; double-click (long-press on touch) to edit; events within 14 days are highlighted. Settings → "Card display" toggles zodiac, constellation, lunar date and leap-month marker (all on by default).
+- **Compatibility**: Obsidian `>= 0.15.0`, desktop and mobile. MIT license — see [LICENSE](./LICENSE).
 
-### Screenshots
+---
 
-| Light theme | Dark theme |
-| --- | --- |
-| ![Main view (light theme)](docs/screenshots/plugin-main-view-light.png) | ![Main view (dark theme)](docs/screenshots/plugin-main-view-dark.png) |
+## 安装
 
-Entries are stored in a plain Markdown note in your vault:
+**社区市场（推荐）**：Obsidian 设置 → 第三方插件 → 浏览 → 搜「Important Days」→ 安装启用。客户端只逐个下载 `main.js`、`manifest.json`、`styles.css` 三份文件；插件不联网、无额外数据文件，更新也在同一页点一下即可。
 
-![Data file format](docs/screenshots/data-file-format.png)
+**手动安装**（比如所在网络打不开社区插件浏览器）：
 
-### Installation
+1. 打开本仓库的 [Releases 页面](https://github.com/duany2026/important-days/releases)，下载最新版本里的 `important-days-<版本号>.zip`
+2. 解压，得到文件夹 `important-days`
+3. 打开你的 Obsidian 笔记库文件夹，进入隐藏目录 `.obsidian/plugins/`（如果没见过这个目录：在 Obsidian 里点左下角仓库图标 →「在系统资源管理器中显示仓库」，进去就能看到 `.obsidian`）
+4. 把解压出的 `important-days` 文件夹整个放进去，变成 `.obsidian/plugins/important-days/`（里面应有 `main.js`、`manifest.json`、`styles.css`）
+5. 重启 Obsidian → 设置 → 第三方插件 → 关闭「受限模式」（旧版叫「安全模式」）→ 在已安装插件列表中启用「Important Days」（社区插件浏览器、已安装列表、设置侧栏这三处显示 manifest 里的英文名；应用内界面跟随 Obsidian 的语言设置，中文界面下仍显示「重要日子」）
 
-**From the community directory:** Settings → Community plugins → Browse, search for "Important Days", install, then enable.
-
-**Manual installation:**
-
-1. Download `important-days-<version>.zip` from the [Releases page](https://github.com/duany2026/important-days/releases).
-2. Unzip it. You get a folder named `important-days` containing `main.js`, `manifest.json`, and `styles.css`.
-3. Copy that folder into your vault's `.obsidian/plugins/` directory, so you end up with `.obsidian/plugins/important-days/`.
-4. Restart Obsidian, go to Settings → Community plugins, turn off Restricted mode, and enable **Important Days**.
-
-You can also install [BRAT](https://github.com/TfTHacker/obsidian42-brat) and add the repository `https://github.com/duany2026/important-days` to get updates automatically.
-
-The plugin is listed as "Important Days" in the community browser, the installed-plugin list, and the settings sidebar, because those three places render the `name` from `manifest.json`. Inside the app, the interface follows Obsidian's language setting: Simplified Chinese, Traditional Chinese, or English. Any other language falls back to English.
-
-### Usage
-
-1. Click the heart icon in the left ribbon, or run the command "Important Days: Open view".
-2. Click "+" in the top-right corner to add a day: name, type (anniversary / birthday / recurring event), and date. For birthdays you can tick the lunar checkbox and, when it applies, the leap-month checkbox.
-3. Double-click a card on desktop, or long-press it on a touch device, to edit it. The edit dialog also deletes, behind a confirmation dialog.
-4. If the view says the data file is missing, open the plugin settings and click "Rescan", or create a Markdown note whose first-level heading is `# Important Days` (or `# 重要日子`).
-
-Events falling within the next 14 days are highlighted, and the view refreshes itself when the date rolls over at midnight.
-
-### Data file
-
-Every entry lives in one Markdown note. By default the plugin scans the vault for a note whose H1 is `# Important Days` or `# 重要日子`; you can also point it at a path manually in the settings.
-
-```markdown
-# 重要日子
-
-## 纪念日
-- 结婚纪念日 | 2023-05-20
-
-## 生日
-- 妈妈生日 | 1965-08-15
-- 奶奶生日 | 1940-12-08 | 农历
-- 闰月生日 | 1984-10-05 | 农历闰
-
-## 周期事件
-- 交房租 | 每月 15
-- 季度考核 | 每季度 3-15
-- 年检 | 每年 05-20
-- 例会 | 每周 5
-```
-
-The headings and markers can be written in English, Simplified Chinese, or Traditional Chinese, and the plugin reads all three. Entry names can be in any language. The same file in English:
-
-```markdown
-# Important Days
-
-## Anniversaries
-- Wedding | 2023-05-20
-
-## Birthdays
-- Mom | 1965-08-15
-- Grandma | 1940-12-08 | lunar
-- Leap-month birthday | 1984-10-05 | lunar leap
-
-## Recurring Events
-- Rent | monthly 15
-- Quarterly review | quarterly 3-15
-- Car inspection | yearly 05-20
-- Team meeting | weekly 5
-```
-
-- A new data note is written in the current interface language (`Important Days.md` in English, `重要日子.md` in Chinese).
-- When you add entries to an existing note, the plugin keeps using the style that note already uses, so one file never mixes languages.
-- Switching Obsidian's language does not rewrite your note or start a new one; the old note keeps working.
-
-- The `##` heading selects the type: `Anniversaries` / `纪念日` / `紀念日`, `Birthdays` / `生日`, `Recurring Events` / `周期事件` / `週期事件`.
-- Dates are `YYYY-M-D`; leading zeros are optional.
-- A third column of `lunar` (`农历` / `農曆`) on a birthday means the date is lunar; `lunar leap` (`农历闰` / `農曆閏`) means a leap-month birthday. If that lunar year has no such leap month, the regular month is used instead.
-- Recurring formats: `monthly N` (`每月 N`), `quarterly M-D` (`每季度` / `每季`, where M is 1-3), `yearly MM-DD` (`每年`), `weekly N` (`每周` / `每週`, where N is 1-7, Monday to Sunday). A day number beyond the month's length is clamped to the last day.
-- Anniversaries are always treated as solar dates, even when a lunar marker is present.
-- The note is ordinary Markdown and can be edited by hand. Your own sections, trailing remarks, and non-standard spacing are preserved. If the file changed on disk while the plugin was editing, the write is refused and you are asked to refresh, so nothing is silently overwritten.
-
-### Settings
-
-| Setting | Description |
-| --- | --- |
-| File path (文件路径) | Vault-relative path to the data note, e.g. `Notes/Important Days.md`. Committed on blur or Enter, not on every keystroke. A value that does not end in `.md` is rejected with a notice and the previous value is kept. The note is created automatically when you add a day. |
-| Auto scan (自动扫描) | Finds the data note by its `# Important Days` or `# 重要日子` H1. When several notes match, the first is used and the others are reported. The path field updates to whatever the scan picked. |
-
-### Privacy and network use
-
-The plugin makes **no network requests at all**. Lunar conversion, Chinese zodiac animals, and zodiac signs are computed locally from tables shipped inside `main.js`.
-
-- No account, no paid features, no telemetry or analytics; no user data leaves your device.
-- No files outside your vault are accessed. Reads and writes are limited to the one Markdown data note in your vault and the plugin's own `data.json` settings file.
-- Everything works offline.
-
-### Compatibility
-
-- Obsidian `>= 0.15.0`
-- Desktop and mobile (`isDesktopOnly: false`)
-
-### License
-
-MIT — see [LICENSE](./LICENSE). Author: duany.
+**BRAT**：安装 [BRAT](https://github.com/TfTHacker/obsidian42-brat) 插件，添加仓库地址 `https://github.com/duany2026/important-days`，可自动更新。
 
 ---
 
@@ -271,6 +154,7 @@ MIT — see [LICENSE](./LICENSE). Author: duany.
 - 新增：界面语言跟随 Obsidian 的语言设置，支持简体中文、繁体中文、English；其他语言显示英文。不用额外设置
 - 新增：数据文件里的标题和标记（如「## 纪念日」「农历」「每周」）也认繁体和英文写法（如「## 紀念日」「農曆」「每週」，「## Anniversaries」「lunar」「weekly」），三种写法可以混用
 - 新增：第一次新建数据文件时按界面语言生成（英文界面下文件名是 `Important Days.md`）；往已有文件里添加条目时沿用这个文件原来的写法，同一个文件不会中英混杂
+- 新增：设置页「卡片显示」——属相、星座、农历日期、闰月标注四段卡片信息可各自关闭，默认全开；只影响界面显示，不改数据文件
 - 调整：电脑上卡片恢复成一排一张，和手机一致（1.4.x 在宽窗口里会排成多列）
 - 保证：切换 Obsidian 界面语言后，原来的数据文件照常读写，不会被改写，也不会另起一个新文件把数据分成两份；手动指定过的数据文件路径保持不变
 
@@ -387,15 +271,11 @@ MIT — see [LICENSE](./LICENSE). Author: duany.
 - 修复：农历月仅 29 天时输入「三十」（如腊月三十）导致跨月错位（现自动取该月最后一天）
 - 修复：外部修改数据文件后视图缓存未同步
 
-## 许可
-
-MIT License
-
-作者：duany
+---
 
 ## 发布打包
 
-仓库根目录即插件目录，`main.js` 就是唯一源码，没有构建步骤。`.github/workflows/release.yml` 由**推送 tag** 触发，tag 必须与 `manifest.json` 里的 `version` 逐字相同、**不带 `v` 前缀**——社区目录是按「tag == manifest.version」去找发行版的，带 `v` 的 tag 它认不到（本仓库早期的 `v1.4.0`、`v1.4.1` 就属于这种）。工作流先拦下不合格的 tag，再校验版本号是 `x.y.z` 三段式、`versions.json` 已登记该版本、`node --check main.js` 通过。
+仓库根目录即插件目录，`main.js` 就是唯一源码，没有构建步骤。`.github/workflows/release.yml` 由**推送 tag** 触发，tag 必须与 `manifest.json` 里的 `version` 逐字相同、**不带 `v` 前缀**——社区目录是按「tag == manifest.version」去找发行版的，带 `v` 的 tag 它认不到（本仓库早期的 `v1.4.0`、`v1.4.1` 就属于这种）。工作流先拦下不合格的 tag，再校验版本号是 `x.y.z` 三段式、`versions.json` 已登记该版本、`node --check main.js` 通过、`scripts/check-i18n.mjs` 三语词典完整。
 
 发行版上传**四个附件**：`main.js`、`manifest.json`、`styles.css` 三份独立文件，外加手动安装用的 `important-days-<版本号>.zip`。三份独立附件是必须的——从社区目录安装时 Obsidian 只逐个下载这三份，ZIP 它不认；`versions.json`、`README.md`、`LICENSE` 只进 ZIP。那三份文件另有 `actions/attest` 生成的构建来源证明。
 
@@ -404,3 +284,7 @@ ZIP 内逐个点名上述六个文件，**不含 `data.json`**——其中存有
 发版前版本号要对齐四处：`manifest.json`、`versions.json`（新增一行，值是该版本要求的 `minAppVersion`）、`main.js` 头部注释、本文「版本记录」新增 `### <版本号>（日期）` 一节——发行说明就是从这一节提取的，漏写会退回一句只有版本号的占位说明。
 
 发布令牌：工作流先试仓库 Secret `RELEASE_TOKEN`，用它发布时发行版页面的发布人是令牌属主；该 Secret 缺失或**已过期**时自动退回内置 `GITHUB_TOKEN`，发布人显示为 `github-actions[bot]`。
+
+## License
+
+MIT — 见 [LICENSE](./LICENSE)。作者：**duany**（[@duany2026](https://github.com/duany2026)）
